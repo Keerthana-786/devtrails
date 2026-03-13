@@ -34,8 +34,7 @@
 | 8 | [🤖 AI and ML Integration](#-ai-and-ml-integration) |
 | 9 | [🛠️ Tech Stack](#️-tech-stack) |
 | 10 | [📅 Development Plan](#-development-plan) |
-| 11 | [🚫 What We Do NOT Cover](#-what-we-do-not-cover) |
-| 12 | [👥 Team](#-team) |
+| 11 | [👥 Team](#-team) |
 
 <br/>
 
