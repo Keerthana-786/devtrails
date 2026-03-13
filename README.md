@@ -18,13 +18,7 @@
 > **Detect a disruption. Verify in seconds. Pay the worker. Automatically.**
 > No claim forms. No waiting. No paperwork. Just money in 10 minutes.
 
-<br/>
 
-[🚀 Live Demo](#) &nbsp;·&nbsp; [📹 2-Minute Video](#) &nbsp;·&nbsp; [📄 Docs](#table-of-contents)
-
----
-
-</div>
 
 ## 📖 Table of Contents
 
@@ -586,7 +580,7 @@ gigshield/
 | [keerthana R] | 🎨 Frontend Lead | React PWA, Zone Map, UI/UX |
 | [shakthi ganesh] | ⚙️ Backend Lead | Node.js APIs, MongoDB, Razorpay |
 | [sanjith] | 🤖 AI/ML Lead | Premium model, Fraud detection |
-| [akshay gopi} | 📊 Product Lead | Strategy, Presentation, Video |
+| [akshay gopi]| 📊 Product Lead | Strategy, Presentation, Video |
 
 </div>
 
