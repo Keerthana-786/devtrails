@@ -4,7 +4,6 @@
 <div align="center">
 
 ![Guidewire](https://img.shields.io/badge/Guidewire-DEVTrails%202026-FF6B35?style=for-the-badge)
-![Phase](https://img.shields.io/badge/Phase%201-Submitted-22C55E?style=for-the-badge)
 ![India](https://img.shields.io/badge/Made%20in-India%20🇮🇳-FF9933?style=for-the-badge)
 
 **Detect → Verify → Pay → Navigate**
