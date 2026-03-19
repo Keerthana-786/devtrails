@@ -4,9 +4,7 @@
 <div align="center">
 
 ![Guidewire](https://img.shields.io/badge/Guidewire-DEVTrails%202026-FF6B35?style=for-the-badge)
-![Phase](https://img.shields.io/badge/Phase%201-Submitted-22C55E?style=for-the-badge)
 ![India](https://img.shields.io/badge/Made%20in-India%20🇮🇳-FF9933?style=for-the-badge)
-![PWA](https://img.shields.io/badge/Platform-PWA%20No%20Install-2196F3?style=for-the-badge)
 
 **Detect → Verify → Pay → Navigate**
 *No forms. No calls. No waiting. Money in under 10 minutes.*
