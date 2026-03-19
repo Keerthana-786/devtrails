@@ -4,7 +4,7 @@
 <div align="center">
 
 ![GigShield Banner](https://img.shields.io/badge/Guidewire-DEVTrails%202026-FF6B35?style=for-the-badge&logoColor=white)
-![Status](https://img.shields.io/badge/Status-Phase%201%20Submission-22C55E?style=for-the-badge)
+
 ![Made In India](https://img.shields.io/badge/Made%20in-India%20🇮🇳-FF9933?style=for-the-badge)
 
 **Detect → Verify → Pay → Navigate**
