@@ -234,7 +234,7 @@ Phase 6  Week 7      Demo + Video + Admin Dashboard
 |--------|------|
 | Keerthana R | 🎨 Frontend — React PWA, Map, Camera, Navigation |
 | Shakthi Ganesh | ⚙️ Backend — APIs, MongoDB, Routing, Razorpay |
-| Sanjith | 🤖 ML — 5 models, fraud detection, FastAPI |
+| Sanjith kumar S | 🤖 ML — 5 models, fraud detection, FastAPI |
 | Akshay Gopi | 📊 Product — Strategy, Presentation, Video |
 
 ---
