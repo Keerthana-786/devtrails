@@ -168,23 +168,6 @@ http://localhost:5173
 
 ---
 
-## 📱 Screenshots
-
-<div align="center">
-
-### Dashboard Overview
-<img src="https://via.placeholder.com/800x400/4F46E5/FFFFFF?text=PayNest+Dashboard" alt="PayNest Dashboard" width="80%"/>
-
-### AI Chatbot Assistant
-<img src="https://via.placeholder.com/800x400/059669/FFFFFF?text=AI+Chatbot" alt="AI Chatbot" width="80%"/>
-
-### Risk Assessment
-<img src="https://via.placeholder.com/800x400/DC2626/FFFFFF?text=Risk+Assessment" alt="Risk Assessment" width="80%"/>
-
-</div>
-
----
-
 ## 🎬 Demo Scenarios
 
 ### 🚴 Delivery Partner Journey
