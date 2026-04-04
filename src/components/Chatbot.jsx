@@ -95,10 +95,12 @@ export default function Chatbot() {
         const data = await res.json();
         setMessages(prev => [...prev, { role: 'assistant', content: data.reply }]);
       } else {
-        setMessages(prev => [...prev, { role: 'assistant', content: "🤖 I'm searching my local knowledge base for you..." }]);
+        const errorData = await res.json().catch(() => ({}));
+        setMessages(prev => [...prev, { role: 'assistant', content: errorData.reply || "🤖 I'm searching my local knowledge base for you..." }]);
       }
     } catch (error) {
-      setMessages(prev => [...prev, { role: 'assistant', content: "🤖 Searching offline knowledge..." }]);
+      console.error("Chatbot Fetch Error:", error);
+      setMessages(prev => [...prev, { role: 'assistant', content: "🤖 Searching offline knowledge... Please check your connection." }]);
     } finally {
       setIsTyping(false);
     }
