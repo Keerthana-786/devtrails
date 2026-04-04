@@ -198,7 +198,8 @@ export default function AuthScreens() {
     }))
   }, [])
 
-  const isValid = phone.replace(/\D/g, '').length >= 10 && (isLogin ? password : true)
+  const isEmail = phone.includes('@');
+  const isValid = isEmail ? /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(phone) : phone.replace(/\D/g, '').length >= 10 && (isLogin ? password : true)
 
   const [onboardingStep, setOnboardingStep] = useState(0) // 0: Login, 1-3: Signup steps
   const [platform, setPlatform] = useState('Zomato')
@@ -656,8 +657,8 @@ export default function AuthScreens() {
     return (
       <>
         <div className="field-row">
-          <div className="field-label">Phone Number</div>
-          <input className="auth-field" type="tel" placeholder="+91 98765 43210" value={phone} onChange={e => setPhone(e.target.value)} />
+          <div className="field-label">Phone or Email</div>
+          <input className="auth-field" type="text" placeholder="e.g. +91 98765 43210 or user@email.com" value={phone} onChange={e => setPhone(e.target.value)} />
         </div>
         <div className="field-row">
           <div className="field-label">Password</div>

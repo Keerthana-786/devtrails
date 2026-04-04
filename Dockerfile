@@ -3,7 +3,7 @@
 FROM node:20-alpine AS frontend-builder
 WORKDIR /app
 COPY package*.json ./
-RUN npm install
+RUN npm ci --only=production=false
 COPY . .
 RUN npm run build
 
@@ -11,25 +11,44 @@ RUN npm run build
 FROM node:20-alpine
 WORKDIR /app
 
-# Install Python and dependencies
-RUN apk add --no-cache python3 py3-pip
-RUN python3 -m venv /opt/venv
+# Install Python and create virtual environment
+RUN apk add --no-cache python3 py3-pip curl && \
+    python3 -m venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
 
-# Copy and install Python dependencies
+# Copy and install Python dependencies first (for better caching)
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy Node.js dependencies
+# Copy Node.js dependencies and install
 COPY package*.json ./
-RUN npm install --production
+RUN npm ci
 
 # Copy built frontend from Stage 1
 COPY --from=frontend-builder /app/dist ./dist
 
-# Copy backend files
+# Copy backend source files
 COPY server.js chatbot.js api.py ./
 COPY models/ ./models/
+COPY datasets/ ./datasets/
+
+# Create non-root user for security
+RUN addgroup -g 1001 -S nodejs && \
+    adduser -S nodejs -u 1001
+
+# Change ownership of app directory
+RUN chown -R nodejs:nodejs /app
+USER nodejs
+
+# Expose port
+EXPOSE 8000
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost:8000/health || exit 1
+
+# Start the application
+CMD ["npm", "run", "start"]
 
 # Expose ports
 EXPOSE 8000

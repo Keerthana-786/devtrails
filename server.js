@@ -30,9 +30,10 @@ const users = new Map();
 const payouts = new Map();
 const loans = new Map();
 
-// Initialize demo user for testing
+// Initialize demo users for testing
 users.set('9876543210', {
   phone: '9876543210',
+  email: 'demo@paynest.com',
   name: 'Demo User',
   zone: 'Connaught Place',
   weeklyPremium: 76.50,
@@ -80,9 +81,10 @@ const auth = (req, res, next) => {
 // ── Auth Routes ───────────────────────────────────────────────────────────────
 app.post("/api/auth/otp", (req, res) => {
   const { phone } = req.body;
-  if (!phone || phone.length !== 10) return res.status(400).json({ error: "Invalid phone" });
-  console.log(`OTP sent to +91${phone}: 123456`);
-  res.json({ success: true, message: "OTP sent", debug_otp: "123456" });
+  const isEmail = phone && phone.includes('@');
+  if (!phone || (!isEmail && phone.length !== 10)) return res.status(400).json({ error: "Invalid phone or email" });
+  console.log(`OTP sent to ${phone}: 123456`);
+  res.json({ success: true, message: `OTP sent to ${isEmail ? 'email' : 'phone'}`, debug_otp: "123456" });
 });
 
 app.post("/api/auth/verify", (req, res) => {
@@ -109,7 +111,7 @@ app.post("/api/auth/verify", (req, res) => {
     users.set(phone, user);
   }
 
-  const token = jwt.sign({ id: user.id, phone }, JWT_SECRET, { expiresIn: "30d" });
+  const token = jwt.sign({ id: user.id, phone: user.phone, email: user.email }, JWT_SECRET, { expiresIn: "30d" });
   res.json({ success: true, token, user, isNew });
 });
 

@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: paynest-backend
+    env: docker
+    dockerfilePath: Dockerfile
+    branch: main
+    plan: free
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: ML_URL
+        value: http://localhost:8001
