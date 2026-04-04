@@ -146,13 +146,13 @@ export default function Chatbot() {
       } else {
         // Backend returned error, fallback to local match
         const localReply = findBestMatchLocal(messageText);
-        setMessages(prev => [...prev, { role: 'assistant', content: "🔍 *Searching local database...*\n\n" + localReply }]);
+        setMessages(prev => [...prev, { role: 'assistant', content: localReply }]);
       }
     } catch (error) {
       console.error("Chatbot Fetch Error:", error);
       // Network error/Offline, fallback to local match
       const localReply = findBestMatchLocal(messageText);
-      setMessages(prev => [...prev, { role: 'assistant', content: "📡 *Offline Support Mode...*\n\n" + localReply }]);
+      setMessages(prev => [...prev, { role: 'assistant', content: localReply }]);
     } finally {
       setIsTyping(false);
     }

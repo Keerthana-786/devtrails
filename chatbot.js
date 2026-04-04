@@ -543,13 +543,12 @@ async function performAadhaarOCR(base64Data, mimeType) {
 
 function getLocalFallbackResponse(prompt, context) {
   const match = findBestMatch(prompt, context);
-  const prefix = "🔍 *Let me check the local knowledge base...*\n\n";
 
   if (match && match.confidence > 0.6) {
     try {
       const response = match.data.response(context, match.isDefinition);
       // Add confidence indicator for AI responses
-      let finalResponse = prefix + response;
+      let finalResponse = response;
       if (match.confidence < 1.0) {
         finalResponse += `\n\n💡 *This answer matches your question with ${(match.confidence * 100).toFixed(0)}% similarity*`;
       }
@@ -564,23 +563,23 @@ function getLocalFallbackResponse(prompt, context) {
 
   // Help/Guidance questions
   if (q.includes('help') || q.includes('how to') || q.includes('guide') || q.includes('tutorial')) {
-    return prefix + `🆘 **Need Help?** I can assist with:\n• 💰 Checking your wallet balance\n• 📊 Understanding your stability score\n• 🛡️ Explaining safe zones\n• 💳 Premium calculations\n• 🏅 Badge achievements\n• 🆔 Aadhaar verification\n\nJust ask me anything about PayNest!`;
+    return `🆘 **Need Help?** I can assist with:\n• 💰 Checking your wallet balance\n• 📊 Understanding your stability score\n• 🛡️ Explaining safe zones\n• 💳 Premium calculations\n• 🏅 Badge achievements\n• 🆔 Aadhaar verification\n\nJust ask me anything about PayNest!`;
   }
 
   // Greeting responses
   if (q.includes('hello') || q.includes('hi') || q.includes('hey') || q.includes('good morning') || q.includes('good evening')) {
     const hour = new Date().getHours();
     const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
-    return prefix + `👋 ${greeting}! I'm your PayNest AI assistant. How can I help you today?`;
+    return `👋 ${greeting}! I'm your PayNest AI assistant. How can I help you today?`;
   }
 
   // Thank you responses
   if (q.includes('thank') || q.includes('thanks')) {
-    return prefix + `🙏 You're welcome! Happy to help with your PayNest experience. Feel free to ask me anything else!`;
+    return `🙏 You're welcome! Happy to help with your PayNest experience. Feel free to ask me anything else!`;
   }
 
   // Default fallback with suggestions
-  return prefix + `🤖 I'm your PayNest AI Assistant! I can help you with:\n\n💰 **Balance**: Check your wallet or earnings\n📊 **Score**: View your stability rating\n🛡️ **Zones**: Find safe working areas\n💳 **Premium**: Understand your costs\n🏅 **Badges**: See your achievements\n🆔 **KYC**: Aadhaar verification status\n\nWhat would you like to know about?`;
+  return `🤖 I'm your PayNest AI Assistant! I can help you with:\n\n💰 **Balance**: Check your wallet or earnings\n📊 **Score**: View your stability rating\n🛡️ **Zones**: Find safe working areas\n💳 **Premium**: Understand your costs\n🏅 **Badges**: See your achievements\n🆔 **KYC**: Aadhaar verification status\n\nWhat would you like to know about?`;
 }
 
 export { chatWithGPT, performAadhaarOCR, QUESTION_PATTERNS, getLocalFallbackResponse };
