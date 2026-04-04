@@ -250,13 +250,6 @@ app.post("/api/ai/zone", auth, async (req, res) => {
 app.post("/api/ai/chat", auth, async (req, res) => {
   const { messages, context } = req.body;
 
-  if (!process.env.OPENAI_API_KEY || process.env.OPENAI_API_KEY === "YOUR_OPENAI_API_KEY_HERE") {
-    return res.status(503).json({
-      error: "AI Assistant temporarily unavailable",
-      message: "OpenAI API key missing in .env"
-    });
-  }
-
   try {
     // Get the last user message
     const lastMessage = messages[messages.length - 1];
@@ -277,13 +270,6 @@ app.post("/api/ai/chat", auth, async (req, res) => {
 // ── Comprehensive AI Chatbot Endpoint ───────────────────────────────────────
 app.post("/api/chatbot", auth, async (req, res) => {
   const { message, context } = req.body;
-
-  if (!process.env.OPENAI_API_KEY || process.env.OPENAI_API_KEY === "your_openai_key_here") {
-    return res.status(503).json({
-      error: "AI Chatbot temporarily unavailable",
-      message: "OpenAI API key missing in .env"
-    });
-  }
 
   try {
     const user = users.get(req.user.phone);
