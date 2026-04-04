@@ -13,11 +13,15 @@ WORKDIR /app
 
 # Install Python and supporting packages
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    python3 python3-venv python3-pip curl ca-certificates && \
+    python3 python3-venv python3-pip python3-dev build-essential \
+    curl ca-certificates && \
     rm -rf /var/lib/apt/lists/*
 
 RUN python3 -m venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
+
+# Upgrade pip and wheel before installing ML dependencies
+RUN pip install --no-cache-dir --upgrade pip setuptools wheel
 
 # Copy and install Python dependencies first (for better caching)
 COPY requirements.txt .
@@ -25,7 +29,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy Node.js dependencies and install
 COPY package*.json ./
-RUN npm ci
+RUN npm ci --include=dev
 
 # Copy built frontend from Stage 1
 COPY --from=frontend-builder /app/dist ./dist
