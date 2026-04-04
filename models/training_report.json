@@ -1,0 +1,72 @@
+{
+  "risk_model": {
+    "accuracy": 86.88,
+    "cv_mean": 85.94,
+    "cv_std": 0.64,
+    "feature_importances": {
+      "rainfall_mm": 0.088,
+      "aqi": 0.2475,
+      "traffic_disruption": 0.0787,
+      "temperature_c": 0.21,
+      "flood_history_score": 0.2896,
+      "visibility_km": 0.0248,
+      "humidity_pct": 0.0237,
+      "wind_speed_kmh": 0.0257,
+      "month": 0.0119
+    }
+  },
+  "loss_model": {
+    "mae": 29.71,
+    "r2": 0.6247,
+    "feature_importances": {
+      "hourly_rate": 0.1267,
+      "normal_work_hours": 0.1378,
+      "rainfall_mm": 0.3322,
+      "traffic_disruption": 0.181,
+      "aqi": 0.1793,
+      "day_of_week": 0.0187,
+      "is_peak_hour": 0.0049,
+      "city_index": 0.0193
+    }
+  },
+  "fraud_model": {
+    "rf_auc": 0.9854,
+    "ensemble_auc": 0.9657,
+    "fraud_rate": 0.3,
+    "feature_importances": {
+      "gps_deviation_km": 0.5773,
+      "location_consistency": 0.0573,
+      "claim_frequency_30d": 0.0998,
+      "account_age_months": 0.0908,
+      "multiple_claims_per_day": 0.0047,
+      "orders_during_disruption": 0.0158,
+      "avg_payout_inr": 0.0898,
+      "trust_score": 0.0549,
+      "zone_risk_tier": 0.0096
+    }
+  },
+  "loan_model": {
+    "accuracy": 100.0,
+    "auc": 1.0,
+    "amount_mae": 46.35
+  },
+  "zone_model": {
+    "accuracy": 100.0
+  },
+  "dynamic_pricing_model": {
+    "mae": 1.61,
+    "r2": 0.9756,
+    "feature_importances": {
+      "base_premium": 0.3621,
+      "zone_lat": 0.0013,
+      "zone_lng": 0.0018,
+      "experience_months": 0.0747,
+      "vehicle_encoded": 0.0419,
+      "historical_safety_score": 0.165,
+      "current_weather_risk": 0.1758,
+      "traffic_congestion_index": 0.1276,
+      "time_of_day": 0.0449,
+      "day_of_week": 0.0049
+    }
+  }
+}
