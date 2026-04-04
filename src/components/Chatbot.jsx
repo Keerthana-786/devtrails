@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useApp } from '../context/AppContext.jsx';
+import kbData from '../../chatbot_kb.json';
 
 const API_BASE = import.meta.env.VITE_API_URL || (import.meta.env.MODE === 'development' ? 'http://localhost:8000' : (typeof window !== 'undefined' ? window.location.origin : 'https://devtrails.onrender.com'));
 
@@ -48,6 +49,55 @@ export default function Chatbot() {
     }
   }, [messages, isTyping]);
 
+  const findBestMatchLocal = (question) => {
+    const q = question.toLowerCase().trim();
+    let bestMatch = null;
+    let bestScore = 0;
+
+    // 1. Exact keyword match
+    for (const entry of kbData) {
+      for (const keyword of entry.keywords) {
+        if (q.includes(keyword.toLowerCase())) {
+          return entry.answer;
+        }
+      }
+    }
+
+    // 2. Similarity match
+    for (const entry of kbData) {
+      for (const keyword of entry.keywords) {
+        const similarity = calculateSimilarity(q, keyword.toLowerCase());
+        if (similarity > bestScore && similarity > 0.6) {
+          bestMatch = entry.answer;
+          bestScore = similarity;
+        }
+      }
+    }
+
+    return bestMatch || "🤖 I'm your PayNest AI Assistant! I can help you with:\n\n💰 **Balance**: Check your wallet or earnings\n📊 **Score**: View your stability rating\n🛡️ **Zones**: Find safe working areas\n💳 **Premium**: Understand your costs\n🏅 **Badges**: See your achievements\n🆔 **KYC**: Aadhaar verification status\n\nWhat would you like to know about?";
+  };
+
+  const calculateSimilarity = (str1, str2) => {
+    const longer = str1.length > str2.length ? str1 : str2;
+    const shorter = str1.length > str2.length ? str2 : str1;
+    if (longer.length === 0) return 1.0;
+    const distance = levenshteinDistance(longer, shorter);
+    return (longer.length - distance) / longer.length;
+  };
+
+  const levenshteinDistance = (str1, str2) => {
+    const matrix = [];
+    for (let i = 0; i <= str2.length; i++) matrix[i] = [i];
+    for (let j = 0; j <= str1.length; j++) matrix[0][j] = j;
+    for (let i = 1; i <= str2.length; i++) {
+      for (let j = 1; j <= str1.length; j++) {
+        if (str2.charAt(i - 1) === str1.charAt(j - 1)) matrix[i][j] = matrix[i - 1][j - 1];
+        else matrix[i][j] = Math.min(matrix[i - 1][j - 1] + 1, matrix[i][j - 1] + 1, matrix[i - 1][j] + 1);
+      }
+    }
+    return matrix[str2.length][str1.length];
+  };
+
   const handleSendMessage = async (text) => {
     const messageText = text || input;
     if (!messageText.trim() || isTyping) return;
@@ -58,7 +108,7 @@ export default function Chatbot() {
     setIsTyping(true);
 
     try {
-      const context = {
+      const contextData = {
         weeklyPremium,
         walletBalance,
         activeDisruptions,
@@ -68,7 +118,6 @@ export default function Chatbot() {
         pricingBreakdown,
         weather,
         traffic,
-        // Aadhaar context
         aadhaarUploaded,
         aadhaarName,
         aadhaarNumber,
@@ -87,7 +136,7 @@ export default function Chatbot() {
         },
         body: JSON.stringify({
           message: messageText,
-          context
+          context: contextData
         })
       });
 
@@ -95,12 +144,15 @@ export default function Chatbot() {
         const data = await res.json();
         setMessages(prev => [...prev, { role: 'assistant', content: data.reply }]);
       } else {
-        const errorData = await res.json().catch(() => ({}));
-        setMessages(prev => [...prev, { role: 'assistant', content: errorData.reply || "🤖 I'm searching my local knowledge base for you..." }]);
+        // Backend returned error, fallback to local match
+        const localReply = findBestMatchLocal(messageText);
+        setMessages(prev => [...prev, { role: 'assistant', content: "🔍 *Searching local database...*\n\n" + localReply }]);
       }
     } catch (error) {
       console.error("Chatbot Fetch Error:", error);
-      setMessages(prev => [...prev, { role: 'assistant', content: "🤖 Searching offline knowledge... Please check your connection." }]);
+      // Network error/Offline, fallback to local match
+      const localReply = findBestMatchLocal(messageText);
+      setMessages(prev => [...prev, { role: 'assistant', content: "📡 *Offline Support Mode...*\n\n" + localReply }]);
     } finally {
       setIsTyping(false);
     }
