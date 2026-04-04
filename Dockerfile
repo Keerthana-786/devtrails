@@ -1,19 +1,22 @@
 # Use a multi-stage build to keep the image slim
 # Stage 1: Build the React frontend
-FROM node:20-alpine AS frontend-builder
+FROM node:20-slim AS frontend-builder
 WORKDIR /app
 COPY package*.json ./
-RUN npm ci --only=production=false
+RUN npm ci --include=dev
 COPY . .
 RUN npm run build
 
 # Stage 2: Final image with Node.js and Python
-FROM node:20-alpine
+FROM node:20-slim
 WORKDIR /app
 
-# Install Python and create virtual environment
-RUN apk add --no-cache python3 py3-pip curl && \
-    python3 -m venv /opt/venv
+# Install Python and supporting packages
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    python3 python3-venv python3-pip curl ca-certificates && \
+    rm -rf /var/lib/apt/lists/*
+
+RUN python3 -m venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
 
 # Copy and install Python dependencies first (for better caching)
@@ -33,8 +36,8 @@ COPY models/ ./models/
 COPY datasets/ ./datasets/
 
 # Create non-root user for security
-RUN addgroup -g 1001 -S nodejs && \
-    adduser -S nodejs -u 1001
+RUN groupadd -g 1001 nodejs && \
+    useradd -u 1001 -g nodejs -m nodejs
 
 # Change ownership of app directory
 RUN chown -R nodejs:nodejs /app
