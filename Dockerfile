@@ -35,13 +35,14 @@ RUN npm ci --include=dev
 COPY --from=frontend-builder /app/dist ./dist
 
 # Copy backend source files
-COPY server.js chatbot.js api.py ./
+COPY server.js chatbot.js api.py docker-start.sh ./
 COPY models/ ./models/
 COPY datasets/ ./datasets/
 
 # Create non-root user for security
 RUN groupadd -g 1001 nodejs && \
-    useradd -u 1001 -g nodejs -m nodejs
+    useradd -u 1001 -g nodejs -m nodejs && \
+    chmod +x docker-start.sh
 
 # Change ownership of app directory
 RUN chown -R nodejs:nodejs /app
