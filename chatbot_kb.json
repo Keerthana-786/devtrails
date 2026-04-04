@@ -1,0 +1,42 @@
+[
+  {
+    "keywords": ["balance", "wallet", "money", "how much", "funds"],
+    "answer": "💰 Your current **Wallet Balance** is shown in the sidebar. This includes your accumulated auto-payouts and recent earnings protection. You can withdraw this to your linked UPI/Bank account instantly!"
+  },
+  {
+    "keywords": ["payout", "history", "recent", "payment", "money received"],
+    "answer": "📈 All payouts are **automatically pushed** when rainfall or traffic triggers are met. No manual claim needed! You can view your history in the Payouts tab."
+  },
+  {
+    "keywords": ["stability", "score", "profile", "rating", "performance"],
+    "answer": "📊 Your **Stability Score** represents your consistency in working during safe windows. High scores (above 80%) can help lower your future weekly premiums by up to 20%!"
+  },
+  {
+    "keywords": ["paynest", "website", "about", "what is this", "explain"],
+    "answer": "🚀 **PayNest** is an AI-powered income protection platform for gig workers. We use real-time weather and traffic data to automatically pay you when disruptions happen. Zero-touch, zero-claims!"
+  },
+  {
+    "keywords": ["safe zone", "low risk", "good area", "where to work"],
+    "answer": "🛡️ A **Safe Zone** is an area with minimal hazard risk right now. Working here helps you maintain your trust score and keeps your insurance costs low."
+  },
+  {
+    "keywords": ["premium", "fee", "cost", "price", "weekly"],
+    "answer": "💰 Your **Weekly Premium** is dynamic—it adapts to your risk profile. If you work in safer zones and better weather, your premium for the next week will automatically decrease."
+  },
+  {
+    "keywords": ["aadhaar", "kyc", "verify", "identity", "id proof"],
+    "answer": "🆔 **Aadhaar Verification** is required for full protection. Click the 📄 button to upload your card. We'll securely extract your details and add **+4 points** to your Trust Score!"
+  },
+  {
+    "keywords": ["weather", "rain", "traffic", "condition"],
+    "answer": "🌦️ We monitor rainfall and traffic levels in real-time. If rain exceeds 30mm or traffic congestion hits 80%, a payout is triggered automatically for covered users."
+  },
+  {
+    "keywords": ["fraud", "risk", "security", "safe"],
+    "answer": "🔒 PayNest uses bank-grade security. Our ML models also detect fraud to ensure that honest workers get their payouts as fast as possible without any manual audits."
+  },
+  {
+    "keywords": ["hello", "hi", "hey", "help"],
+    "answer": "👋 Hello! I'm your PayNest Assistant. Ask me about your **balance**, **payouts**, **stability score**, or how to **verify your Aadhaar**!"
+  }
+]

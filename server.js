@@ -15,10 +15,24 @@ dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 8000;
+
+// Update ML URL to handle Render's internal port or external URL
 const ML_URL = process.env.ML_URL || "http://localhost:8001";
 const JWT_SECRET = process.env.JWT_SECRET || "paynest_secret_2024";
 
-app.use(cors());
+// Configure CORS for Production (Firebase)
+app.use(cors({
+  origin: [
+    "http://localhost:5173",
+    "https://devtrails.web.app",
+    "https://devtrails.firebaseapp.com",
+    "https://devtrails.onrender.com",
+    "https://aara-514dc.web.app",
+    "https://aara-514dc.firebaseapp.com"
+  ],
+  credentials: true
+}));
+
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ limit: "10mb", extended: true }));
 

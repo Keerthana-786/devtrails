@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { useApp } from '../context/AppContext.jsx'
  
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+const API_BASE = import.meta.env.VITE_API_URL || (import.meta.env.MODE === 'development' ? 'http://localhost:8000' : (typeof window !== 'undefined' ? window.location.origin : 'https://devtrails.onrender.com'));
 
 const css = `
   @import url('https://fonts.googleapis.com/css2?family=Caveat:wght@700&family=Nunito:wght@400;500;600;700;800;900&display=swap');
@@ -181,6 +181,13 @@ export default function AuthScreens() {
   
   const [loading, setLoading] = useState(false)
   const [success, setSuccess] = useState(false)
+  const startSignup = () => {
+    setIsLogin(false)
+    setOnboardingStep(1)
+    setStepErrors({})
+    setSuccess(false)
+    setLoading(false)
+  }
   const [aadhaarFile, setAadhaarFile] = useState(null)
   const [aadhaarState, setAadhaarState] = useState('idle') // idle, analyzing, success, invalid, error
   const [aadhaarData, setAadhaarData] = useState(null)
@@ -244,6 +251,7 @@ export default function AuthScreens() {
   const handleAction = async () => {
     if (onboardingStep > 0 && onboardingStep <= 3) {
       if (!validateStep(onboardingStep)) return
+      setIsLogin(false)
       if (onboardingStep < 3) {
         setOnboardingStep(prev => prev + 1)
         return
@@ -444,7 +452,7 @@ export default function AuthScreens() {
                   We never share your data with third parties.<br/>
                   Compliant with UIDAI guidelines.
                 </div>
-                <div style={{ fontSize: '12px', color: '#555', marginTop: '12px', textAlign: 'center', cursor: 'pointer' }} onClick={() => setOnboardingStep(2)}>
+                <div style={{ fontSize: '12px', color: '#555', marginTop: '12px', textAlign: 'center', cursor: 'pointer' }} onClick={() => { setIsLogin(false); setOnboardingStep(2) }}>
                   Skip for now — upload later in Profile
                 </div>
               </>
@@ -674,7 +682,7 @@ export default function AuthScreens() {
           </label>
         </div>
         <div className="links-row">
-          <span className="act-link" onClick={() => setOnboardingStep(1)}>Create account</span>
+          <span className="act-link" onClick={startSignup}>Create account</span>
           <span className="sep">|</span>
           <span className="act-link">Forgot password?</span>
         </div>

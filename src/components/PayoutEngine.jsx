@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react'
 import { useApp } from '../context/AppContext.jsx'
 import { Card, Btn, ProgressBar } from './UI.jsx'
 
+const API_BASE = import.meta.env.VITE_API_URL || (import.meta.env.MODE === 'development' ? 'http://localhost:8000' : (typeof window !== 'undefined' ? window.location.origin : 'https://devtrails.onrender.com'))
+
 export default function PayoutEngine({ onPaid }) {
   const { user, weather, setPayouts } = useApp()
   const [checking, setChecking] = useState(false)
@@ -15,7 +17,7 @@ export default function PayoutEngine({ onPaid }) {
   const checkPayout = async () => {
     setChecking(true)
     try {
-      const response = await fetch('http://localhost:8000/api/payout/check', {
+      const response = await fetch(`${API_BASE}/api/payout/check`
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -46,7 +48,7 @@ export default function PayoutEngine({ onPaid }) {
     if (!result?.canPay) return
 
     try {
-      const response = await fetch('http://localhost:8000/api/payout/process', {
+      const response = await fetch(`${API_BASE}/api/payout/process`
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -62,7 +64,7 @@ export default function PayoutEngine({ onPaid }) {
         onPaid?.(payout.payout)
         setResult(null)
         // Refresh payouts
-        const payoutsRes = await fetch('http://localhost:8000/api/payouts', {
+        const payoutsRes = await fetch(`${API_BASE}/api/payouts`
           headers: createAuthHeaders()
         })
         const payoutsData = await payoutsRes.json()

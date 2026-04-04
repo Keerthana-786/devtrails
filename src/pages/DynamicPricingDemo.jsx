@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { Card, Badge, Btn, ProgressBar } from '../components/UI.jsx'
 
+const API_BASE = import.meta.env.VITE_API_URL || (import.meta.env.MODE === 'development' ? 'http://localhost:8000' : (typeof window !== 'undefined' ? window.location.origin : 'https://devtrails.onrender.com'))
 
 const css = `
   @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@500;700&display=swap');
@@ -134,7 +135,7 @@ export default function DynamicPricingDemo() {
   const calculateDynamicPricing = async () => {
     setLoading(true)
     try {
-      const response = await fetch('http://localhost:8000/api/ai/pricing', {
+      const response = await fetch(`${API_BASE}/api/ai/pricing`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -193,7 +194,7 @@ export default function DynamicPricingDemo() {
   const checkTriggers = async () => {
     setLoading(true)
     try {
-      const response = await fetch('http://localhost:8000/api/ai/disruptions', {
+      const response = await fetch(`${API_BASE}/api/ai/disruptions`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -246,7 +247,7 @@ export default function DynamicPricingDemo() {
   const processZeroTouchClaim = async () => {
     setLoading(true)
     try {
-      const response = await fetch('http://localhost:8000/api/ai/loss', {
+      const response = await fetch(`${API_BASE}/api/ai/loss`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

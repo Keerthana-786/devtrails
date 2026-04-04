@@ -2,6 +2,8 @@ import React, { useState } from 'react'
 import { useApp } from '../context/AppContext.jsx'
 import { Card, Badge, Btn } from '../components/UI.jsx'
 
+const API_BASE = import.meta.env.VITE_API_URL || (import.meta.env.MODE === 'development' ? 'http://localhost:8000' : (typeof window !== 'undefined' ? window.location.origin : 'https://devtrails.onrender.com'));
+
 export default function RegistrationPage({ onBack }) {
   const { setUser } = useApp()
   const [step, setStep] = useState(1)
@@ -24,7 +26,7 @@ export default function RegistrationPage({ onBack }) {
 
   const calculateRisk = async () => {
     try {
-      const response = await fetch('http://localhost:8000/api/pricing/dynamic', {
+      const response = await fetch(`${API_BASE}/api/pricing/dynamic`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -80,7 +82,7 @@ export default function RegistrationPage({ onBack }) {
     }
 
     try {
-      const response = await fetch('http://localhost:8000/api/auth/register', {
+      const response = await fetch(`${API_BASE}/api/auth/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

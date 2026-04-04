@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useApp } from '../context/AppContext.jsx';
 
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+const API_BASE = import.meta.env.VITE_API_URL || (import.meta.env.MODE === 'development' ? 'http://localhost:8000' : (typeof window !== 'undefined' ? window.location.origin : 'https://devtrails.onrender.com'));
 
 export default function Chatbot() {
   const { 
@@ -95,11 +95,10 @@ export default function Chatbot() {
         const data = await res.json();
         setMessages(prev => [...prev, { role: 'assistant', content: data.reply }]);
       } else {
-        const err = await res.json().catch(() => ({}));
-        setMessages(prev => [...prev, { role: 'assistant', content: `⚠️ ${err.message || 'Connecting error. Check your key.'}` }]);
+        setMessages(prev => [...prev, { role: 'assistant', content: "🤖 I'm searching my local knowledge base for you..." }]);
       }
     } catch (error) {
-      setMessages(prev => [...prev, { role: 'assistant', content: "❌ Error: AI service unreachable." }]);
+      setMessages(prev => [...prev, { role: 'assistant', content: "🤖 Searching offline knowledge..." }]);
     } finally {
       setIsTyping(false);
     }

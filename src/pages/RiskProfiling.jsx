@@ -1,7 +1,76 @@
 import React, { useState, useEffect } from 'react'
 import { useApp } from '../context/AppContext.jsx'
 
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000'
+const API_BASE = import.meta.env.VITE_API_URL || (import.meta.env.MODE === 'development' ? 'http://localhost:8000' : (typeof window !== 'undefined' ? window.location.origin : 'https://devtrails.onrender.com'))
+
+// Custom Pie/Donut Chart Component
+const RiskDonutChart = ({ zone, seasonal, platform }) => {
+  const zMult = zone?.multiplier || 1.0;
+  const sMult = seasonal?.multiplier || 1.0;
+  const pMult = platform?.multiplier || 1.0;
+  
+  const total = zMult + sMult + pMult;
+  const zPercent = (zMult / total) * 100;
+  const sPercent = (sMult / total) * 100;
+  const pPercent = (pMult / total) * 100;
+
+  // SVG Circle Params
+  const size = 200;
+  const center = size / 2;
+  const radius = 70;
+  const circumference = 2 * Math.PI * radius;
+  
+  const zOffset = circumference;
+  const sOffset = circumference - (circumference * zPercent) / 100;
+  const pOffset = circumference - (circumference * (zPercent + sPercent)) / 100;
+
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: '40px', background: 'rgba(255,255,255,0.03)', padding: '30px', borderRadius: '24px', marginBottom: '32px', border: '1px solid rgba(255,255,255,0.05)' }}>
+      <div style={{ position: 'relative', width: size, height: size }}>
+        <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} style={{ transform: 'rotate(-90deg)' }}>
+          {/* Background */}
+          <circle cx={center} cy={center} r={radius} fill="transparent" stroke="rgba(255,255,255,0.05)" strokeWidth="20" />
+          
+          {/* Zone (Blue) */}
+          <circle cx={center} cy={center} r={radius} fill="transparent" stroke="#3B82F6" strokeWidth="20" strokeDasharray={circumference} strokeDashoffset={0} style={{ transition: 'stroke-dashoffset 1s ease' }} />
+          
+          {/* Seasonal (Light Blue) */}
+          <circle cx={center} cy={center} r={radius} fill="transparent" stroke="#60A5FA" strokeWidth="20" strokeDasharray={circumference} strokeDashoffset={sOffset} style={{ transition: 'stroke-dashoffset 1s ease' }} />
+          
+          {/* Platform (Soft Blue) */}
+          <circle cx={center} cy={center} r={radius} fill="transparent" stroke="#93C5FD" strokeWidth="20" strokeDasharray={circumference} strokeDashoffset={pOffset} style={{ transition: 'stroke-dashoffset 1s ease' }} />
+        </svg>
+        
+        <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', textAlign: 'center' }}>
+          <div style={{ fontSize: '24px', fontWeight: '800' }}>{(total/3).toFixed(1)}x</div>
+          <div style={{ fontSize: '10px', color: 'var(--text-secondary)', textTransform: 'uppercase' }}>Avg Risk</div>
+        </div>
+      </div>
+
+      <div style={{ flex: 1 }}>
+        <h3 style={{ fontSize: '18px', fontWeight: '700', marginBottom: '16px' }}>Risk Composition</h3>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+          {[
+            { label: 'Location Risk', value: zPercent, color: '#3B82F6', icon: '📍' },
+            { label: 'Climate Risk', value: sPercent, color: '#60A5FA', icon: '🌦️' },
+            { label: 'Work Risk', value: pPercent, color: '#93C5FD', icon: '🏪' }
+          ].map(item => (
+            <div key={item.label} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px' }}>
+                <span style={{ color: item.color }}>●</span>
+                <span style={{ color: 'var(--text-secondary)' }}>{item.icon} {item.label}</span>
+              </div>
+              <div style={{ fontWeight: '700', fontSize: '14px' }}>{item.value.toFixed(0)}%</div>
+            </div>
+          ))}
+        </div>
+        <div style={{ marginTop: '20px', fontSize: '12px', color: '#60A5FA', background: 'rgba(59, 130, 246, 0.1)', padding: '10px', borderRadius: '8px' }}>
+          💡 Your risk is primarily driven by <strong>{zPercent > sPercent && zPercent > pPercent ? 'Location' : sPercent > pPercent ? 'Climate' : 'Work'} factors</strong> today.
+        </div>
+      </div>
+    </div>
+  )
+}
 
 export default function RiskProfiling() {
   const { token, user, weather, traffic, currentLocation } = useApp()
@@ -279,6 +348,8 @@ export default function RiskProfiling() {
         </p>
       </div>
 
+      <RiskDonutChart zone={zoneRisk} seasonal={seasonalRisk} platform={platformRisk} />
+
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: '24px' }}>
         <RiskCard
           title="Zone Risk Assessment"
@@ -303,6 +374,54 @@ export default function RiskProfiling() {
           factors={platformRisk?.factors}
           description="Delivery platform risk evaluation based on order patterns and operational factors"
         />
+      </div>
+
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '18px', marginTop: '24px' }}>
+        <div style={{
+          background: 'rgba(22,28,36,0.6)',
+          border: '1px solid rgba(255,255,255,0.05)',
+          borderRadius: '20px',
+          padding: '24px'
+        }}>
+          <h3 style={{ fontSize: '18px', fontWeight: '700', margin: '0 0 12px 0' }}>
+            ✨ Risk Prediction Features
+          </h3>
+          <p style={{ margin: '0 0 16px 0', fontSize: '14px', color: 'var(--text-secondary)' }}>
+            These insights go beyond simple scoring — they turn weather, topology, and platform behavior into action points that help you stay ahead of disruption.
+          </p>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '12px' }}>
+            {[
+              { title: 'Microclimate Alerts', text: 'Receive localized hazard warnings for your delivery zone — rain, traffic buildup, and sudden route risk.' },
+              { title: 'Premium Optimization', text: 'See how safer shifts and preferred platforms can lower your weekly premium over time.' },
+              { title: 'Fraud & Volume Signal', text: 'Detect when platform order patterns or low ratings could increase claim or payout risk.' },
+              { title: 'Adaptive Coverage', text: 'Choose coverage plans informed by real-time risk tiers rather than fixed assumptions.' }
+            ].map(feature => (
+              <div key={feature.title} style={{ background: 'rgba(255,255,255,0.03)', padding: '14px', borderRadius: '14px' }}>
+                <div style={{ fontSize: '14px', fontWeight: '700', marginBottom: '6px', color: '#fff' }}>{feature.title}</div>
+                <div style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>{feature.text}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div style={{
+          background: 'rgba(22,28,36,0.45)',
+          borderRadius: '20px',
+          padding: '24px',
+          border: '1px solid rgba(255,255,255,0.04)'
+        }}>
+          <h3 style={{ fontSize: '18px', fontWeight: '700', margin: '0 0 12px 0' }}>
+            🚀 Why these predictions matter
+          </h3>
+          <p style={{ fontSize: '14px', color: 'var(--text-secondary)', margin: '0 0 10px 0' }}>
+            Risk predictions help you make smarter decisions every shift. They highlight when to push for an order, when to wait out bad weather, and when a low-risk window can secure a cheaper policy.
+          </p>
+          <ul style={{ margin: 0, paddingLeft: '18px', color: 'var(--text-secondary)', fontSize: '14px', lineHeight: '1.7' }}>
+            <li>Understand your zone, season, and platform risk in one dashboard.</li>
+            <li>Use predictive insights to reduce claims and preserve trust score.</li>
+            <li>Protect your earnings with better timing and more informed coverage.</li>
+          </ul>
+        </div>
       </div>
 
       <div style={{

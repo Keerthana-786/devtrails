@@ -1,10 +1,24 @@
 import OpenAI from 'openai';
 import dotenv from 'dotenv';
+import fs from 'fs';
+import path from 'path';
 
 dotenv.config();
 
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 const openai = OPENAI_API_KEY ? new OpenAI({ apiKey: OPENAI_API_KEY }) : null;
+
+// Load Knowledge Base from JSON
+let CHATBOT_KB = [];
+try {
+  const kbPath = path.resolve(process.cwd(), 'chatbot_kb.json');
+  if (fs.existsSync(kbPath)) {
+    const rawData = fs.readFileSync(kbPath, 'utf8');
+    CHATBOT_KB = JSON.parse(rawData);
+  }
+} catch (error) {
+  console.error('Failed to load chatbot_kb.json:', error);
+}
 
 // Rate limiting
 const userRequests = new Map();
@@ -357,7 +371,21 @@ function findBestMatch(question, context) {
   let bestScore = 0;
   let isDefinition = q.includes('mean') || q.includes('explain') || q.includes('what is') || q.includes('why') || q.includes('how');
 
-  // Check exact keyword matches first
+  // 1. Check CHATBOT_KB (JSON Source)
+  for (const entry of CHATBOT_KB) {
+    for (const keyword of entry.keywords) {
+      if (q.includes(keyword.toLowerCase())) {
+        return { 
+          category: 'kb', 
+          data: { response: () => entry.answer }, 
+          isDefinition, 
+          confidence: 1.0 
+        };
+      }
+    }
+  }
+
+  // 2. Check hardcoded QUESTION_PATTERNS as secondary
   for (const [category, data] of Object.entries(QUESTION_PATTERNS)) {
     for (const pattern of data.patterns) {
       if (q.includes(pattern)) {
@@ -366,11 +394,27 @@ function findBestMatch(question, context) {
     }
   }
 
-  // If no exact match, check similarity
+  // 3. Similarity check on KB keywords
+  for (const entry of CHATBOT_KB) {
+    for (const keyword of entry.keywords) {
+      const similarity = calculateSimilarity(q, keyword.toLowerCase());
+      if (similarity > bestScore && similarity > 0.6) {
+        bestMatch = { 
+          category: 'kb', 
+          data: { response: () => entry.answer }, 
+          isDefinition, 
+          confidence: similarity 
+        };
+        bestScore = similarity;
+      }
+    }
+  }
+
+  // 4. Similarity check on patterns
   for (const [category, data] of Object.entries(QUESTION_PATTERNS)) {
     for (const pattern of data.patterns) {
       const similarity = calculateSimilarity(q, pattern);
-      if (similarity > bestScore && similarity > 0.6) { // 60% similarity threshold
+      if (similarity > bestScore && similarity > 0.7) {
         bestMatch = { category, data, isDefinition, confidence: similarity };
         bestScore = similarity;
       }
