@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "start": "concurrently \"npm run server\" \"npm run ml\"",
+    "start": "bash docker-start.sh",
+    "start:dev": "concurrently \"npm run server\" \"npm run ml\"",
     "server": "node server.js",
     "ml": "python3 api.py",
     "lint": "eslint .",

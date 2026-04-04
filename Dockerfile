@@ -60,4 +60,4 @@ ENV PORT=8000
 ENV ML_URL=http://localhost:8001
 
 # Start the application
-CMD ["npm", "run", "start"]
+CMD ["bash", "docker-start.sh"]
