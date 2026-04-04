@@ -57,7 +57,6 @@ HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
 
 # Set environment variables
 ENV NODE_ENV=production
-ENV PORT=8000
 ENV ML_URL=http://localhost:8001
 
 # Start the application
