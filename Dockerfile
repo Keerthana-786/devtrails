@@ -50,17 +50,10 @@ EXPOSE 8000
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
     CMD curl -f http://localhost:8000/health || exit 1
 
-# Start the application
-CMD ["npm", "run", "start"]
-
-# Expose ports
-EXPOSE 8000
-EXPOSE 8001
-
 # Set environment variables
 ENV NODE_ENV=production
 ENV PORT=8000
 ENV ML_URL=http://localhost:8001
 
-# Start both services
+# Start the application
 CMD ["npm", "run", "start"]
