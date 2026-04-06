@@ -670,8 +670,13 @@ app.get("/api/ml/accuracy", (req, res) => {
   }
 });
 
-// Serve static files from the React app
-app.use(express.static(path.join(__dirname, "dist")));
+// Serve static files from the React app (but not for API routes)
+app.use((req, res, next) => {
+  if (req.path.startsWith('/api/')) {
+    return next();
+  }
+  express.static(path.join(__dirname, "dist"))(req, res, next);
+});
 
 // The "catchall" handler: for any request that doesn't
 // match one above, send back React's index.html file.
