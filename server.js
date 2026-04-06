@@ -49,19 +49,14 @@ app.use((req, res, next) => {
     "https://devtrails.onrender.com"
   ];
   
-  // Set CORS headers for all requests matching the whitelist
   if (origin && allowed.some(a => origin.startsWith(a))) {
     res.header("Access-Control-Allow-Origin", origin);
     res.header("Access-Control-Allow-Credentials", "true");
-  } else if (!origin) {
-    // For non-browser requests (like curl), set a default
-    res.header("Access-Control-Allow-Origin", "*");
   }
   
   res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
   res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization");
 
-  // Handle preflight requests immediately
   if (req.method === 'OPTIONS') {
     return res.sendStatus(204);
   }
@@ -643,8 +638,6 @@ app.get("/health", (req, res) => {
 app.get("/api/ml/accuracy", (req, res) => {
   try {
     // Read training report from models directory
-    const fs = require('fs');
-    const path = require('path');
     const reportPath = path.join(__dirname, 'models', 'training_report.json');
     
     if (fs.existsSync(reportPath)) {
