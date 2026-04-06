@@ -39,23 +39,18 @@ const ML_URL = process.env.ML_URL || "http://localhost:8001";
 const JWT_SECRET = process.env.JWT_SECRET || "paynest_secret_2024";
 
 // Configure CORS for Production (Firebase)
-app.use((req, res, next) => {
-  // Always allow the specific origin for now
-  res.header("Access-Control-Allow-Origin", "https://paynest-2f498.web.app");
-  res.header("Access-Control-Allow-Credentials", "true");
-  res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
-  res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization");
-
-  if (req.method === 'OPTIONS') {
-    return res.sendStatus(204);
-  }
-
-  next();
-});
-  }
-
-  next();
-});
+app.use(cors({
+  origin: [
+    "http://localhost:5173", // Development
+    "https://paynest-2f498.web.app", // Production Firebase
+    "https://paynest-2f498.firebaseapp.com", // Firebase fallback
+    "https://devtrails.web.app", // Alternative domain
+    "https://devtrails.firebaseapp.com" // Alternative domain
+  ],
+  credentials: true, // Allow cookies and authorization headers
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
+}));
 
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ limit: "10mb", extended: true }));
