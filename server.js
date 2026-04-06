@@ -7,11 +7,29 @@ import dotenv from "dotenv";
 import { chatWithGPT, performAadhaarOCR } from "./chatbot.js";
 import path from "path";
 import { fileURLToPath } from "url";
+import fs from "fs";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 dotenv.config();
+
+// ── Persistence Layer ────────────────────────────────────────────────────────
+const DB_PATH = path.join(__dirname, "db.json");
+
+const loadDB = () => {
+  if (!fs.existsSync(DB_PATH)) {
+    return { users: {}, payouts: {} };
+  }
+  return JSON.parse(fs.readFileSync(DB_PATH, "utf8"));
+};
+
+const saveDB = (data) => {
+  fs.writeFileSync(DB_PATH, JSON.stringify(data, null, 2));
+};
+
+// Initial load
+let db = loadDB();
 
 const app = express();
 const PORT = process.env.PORT || 8000;
@@ -22,36 +40,10 @@ const JWT_SECRET = process.env.JWT_SECRET || "paynest_secret_2024";
 
 // Configure CORS for Production (Firebase)
 app.use(cors({
-  origin: [
-    "http://localhost:5173",
-    "https://devtrails.web.app",
-    "https://devtrails.firebaseapp.com",
-    "https://devtrails.onrender.com",
-    "https://aara-514dc.web.app",
-    "https://aara-514dc.firebaseapp.com",
-    "https://paynest-2f498.web.app",
-    "https://paynest-2f498.firebaseapp.com"
-  ],
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
+  origin: 'https://paynest-2f498.web.app',
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  credentials: true
 }));
-
-// Handle preflight requests explicitly
-app.options('*', cors({
-  origin: [
-    "http://localhost:5173",
-    "https://devtrails.web.app",
-    "https://devtrails.firebaseapp.com",
-    "https://devtrails.onrender.com",
-    "https://aara-514dc.web.app",
-    "https://aara-514dc.firebaseapp.com",
-    "https://paynest-2f498.web.app",
-    "https://paynest-2f498.firebaseapp.com"
-  ],
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
 }));
 
 app.use(express.json({ limit: "10mb" }));
@@ -60,39 +52,54 @@ app.use(express.urlencoded({ limit: "10mb", extended: true }));
 // Serve static files from the React app
 app.use(express.static(path.join(__dirname, "dist")));
 
-// ── In-memory store (replace with DB in production) ──────────────────────────
-const users = new Map();
-const payouts = new Map();
-const loans = new Map();
+// ── Data Access Helpers ──────────────────────────────────────────────────────
+const getUsers = () => db.users;
+const getUser = (phone) => db.users[phone];
+const saveUser = (phone, userData) => {
+  db.users[phone] = userData;
+  saveDB(db);
+};
 
-// Initialize demo users for testing
-users.set('9876543210', {
-  phone: '9876543210',
-  email: 'demo@paynest.com',
-  name: 'Demo User',
-  zone: 'Connaught Place',
-  weeklyPremium: 76.50,
-  walletBalance: 150,
-  stabilityScore: 85,
-  policyStatus: 'ACTIVE',
-  badges: [
-    { label: 'Rain Master', earned: true },
-    { label: 'Safe Streak', earned: true },
-    { label: 'Zone Explorer', earned: false }
-  ],
-  payouts: [],
-  activeDisruptions: [],
-  safeZones: ['Karol Bagh', 'Rajouri Garden', 'Lajpat Nagar'],
-  highRiskHours: ['8-10 AM', '5-7 PM'],
-  weather: { rainfall: 2.5, temperature: 28, aqi: 120 },
-  traffic: 45,
-  pricingBreakdown: {
-    base: 50,
-    weather: 15,
-    traffic: 8,
-    zone: 3.5
-  }
-});
+const getPayouts = () => db.payouts;
+const savePayout = (payoutId, payoutData) => {
+  db.payouts[payoutId] = payoutData;
+  saveDB(db);
+};
+
+// Seed demo user if DB is empty
+if (Object.keys(db.users).length === 0) {
+  const demoPhone = '9876543210';
+  db.users[demoPhone] = {
+    phone: demoPhone,
+    email: 'demo@paynest.com',
+    name: 'Demo User',
+    zone: 'Connaught Place',
+    weeklyPremium: 76.50,
+    walletBalance: 150,
+    stabilityScore: 85,
+    policyStatus: 'ACTIVE',
+    badges: [
+      { label: 'Rain Master', earned: true },
+      { label: 'Safe Streak', earned: true },
+      { label: 'Zone Explorer', earned: false }
+    ],
+    payouts: [],
+    activeDisruptions: [],
+    safeZones: ['Karol Bagh', 'Rajouri Garden', 'Lajpat Nagar'],
+    highRiskHours: ['8-10 AM', '5-7 PM'],
+    weather: { rainfall: 2.5, temperature: 28, aqi: 120 },
+    traffic: 45,
+    pricingBreakdown: {
+      base: 50,
+      weather: 15,
+      traffic: 8,
+      zone: 3.5
+    },
+    monthsActive: 6,
+    trustScore: 85
+  };
+  saveDB(db);
+}
 
 // ── Auth Middleware ───────────────────────────────────────────────────────────
 const auth = (req, res, next) => {
@@ -126,7 +133,7 @@ app.post("/api/auth/verify", (req, res) => {
   const { phone, otp } = req.body;
   if (otp !== "123456") return res.status(400).json({ error: "Invalid OTP" });
 
-  let user = users.get(phone);
+  let user = getUser(phone);
   const isNew = !user;
   if (isNew) {
     user = {
@@ -143,7 +150,7 @@ app.post("/api/auth/verify", (req, res) => {
       totalPayouts: 0,
       createdAt: new Date().toISOString(),
     };
-    users.set(phone, user);
+    saveUser(phone, user);
   }
 
   const token = jwt.sign({ id: user.id, phone: user.phone, email: user.email }, JWT_SECRET, { expiresIn: "30d" });
@@ -152,7 +159,7 @@ app.post("/api/auth/verify", (req, res) => {
 
 app.post("/api/auth/onboard", auth, (req, res) => {
   const { name, partner, zone, upiId, plan } = req.body;
-  const user = users.get(req.user.phone);
+  const user = getUser(req.user.phone);
   if (!user) return res.status(404).json({ error: "User not found" });
 
   Object.assign(user, { 
@@ -163,22 +170,23 @@ app.post("/api/auth/onboard", auth, (req, res) => {
     plan: plan || user.plan,
     onboarded: true 
   });
-  users.set(req.user.phone, user);
+  saveUser(req.user.phone, user);
   res.json({ success: true, user });
 });
 
 // ── Payouts Route ───────────────────────────────────────────────────────────
 app.get("/api/payouts", auth, (req, res) => {
-  const user = users.get(req.user.phone);
+  const user = getUser(req.user.phone);
   if (!user) return res.status(404).json({ error: "User not found" });
   
-  const userPayouts = Array.from(payouts.values()).filter((p) => p.userId === user.id);
-  res.json(userPayouts.slice(-20).reverse());
+  const allPayouts = getPayouts();
+  const userPayouts = Object.values(allPayouts).filter((p) => p.userId === user.id);
+  res.json({ payouts: userPayouts.slice(-20).reverse() });
 });
 
 // ── Dashboard Routes ──────────────────────────────────────────────────────────
 app.get("/api/dashboard", auth, async (req, res) => {
-  const user = users.get(req.user.phone);
+  const user = getUser(req.user.phone);
   if (!user) return res.status(404).json({ error: "User not found" });
 
   let weather = { rainfall: 0, temperature: 32, aqi: 85, windSpeed: 12, humidity: 72, visibility: 8 };
@@ -200,7 +208,8 @@ app.get("/api/dashboard", auth, async (req, res) => {
     // fallback to defaults
   }
 
-  const userPayouts = Array.from(payouts.values()).filter((p) => p.userId === user.id);
+  const allPayouts = getPayouts();
+  const userPayouts = Object.values(allPayouts).filter((p) => p.userId === user.id);
 
   res.json({
     user,
@@ -293,7 +302,7 @@ app.post("/api/chatbot", auth, async (req, res) => {
   const { message, context } = req.body;
 
   try {
-    const user = users.get(req.user.phone);
+    const user = getUser(req.user.phone);
     if (!user) {
       return res.status(404).json({ error: "User not found" });
     }
@@ -651,7 +660,7 @@ app.get("/api/ml/accuracy", (req, res) => {
 
 // The "catchall" handler: for any request that doesn't
 // match one above, send back React's index.html file.
-app.get("*all", (req, res) => {
+app.get("*", (req, res) => {
   res.sendFile(path.join(__dirname, "dist", "index.html"));
 });
 
