@@ -40,13 +40,25 @@ const JWT_SECRET = process.env.JWT_SECRET || "paynest_secret_2024";
 
 // Configure CORS for Production (Firebase)
 app.use(cors({
-  origin: [
-    "http://localhost:5173", // Development
-    "https://paynest-2f498.web.app", // Production Firebase
-    "https://paynest-2f498.firebaseapp.com", // Firebase fallback
-    "https://devtrails.web.app", // Alternative domain
-    "https://devtrails.firebaseapp.com" // Alternative domain
-  ],
+  origin: function (origin, callback) {
+    const allowedOrigins = [
+      "http://localhost:5173", // Development
+      "https://paynest-2f498.web.app", // Production Firebase
+      "https://paynest-2f498.firebaseapp.com", // Firebase fallback
+      "https://devtrails.web.app", // Alternative domain
+      "https://devtrails.firebaseapp.com" // Alternative domain
+    ];
+
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+
+    if (allowedOrigins.indexOf(origin) !== -1) {
+      callback(null, true);
+    } else {
+      console.log("CORS blocked origin:", origin);
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   credentials: true, // Allow cookies and authorization headers
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
