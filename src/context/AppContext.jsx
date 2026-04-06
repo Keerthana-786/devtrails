@@ -2,7 +2,7 @@ import React, { createContext, useContext, useEffect, useMemo, useRef, useState 
 
 const AppContext = createContext()
 
-const API_BASE = import.meta.env.VITE_API_URL || (import.meta.env.MODE === 'development' ? 'http://localhost:8000' : 'https://paynest-devtrails.onrender.com')
+const API_BASE = import.meta.env.VITE_API_URL || (import.meta.env.MODE === 'development' ? 'http://localhost:8000' : 'https://devtrails.onrender.com')
 
 const defaultTranslations = {
   goodMorning: 'Good morning',
