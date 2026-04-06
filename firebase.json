@@ -1,6 +1,7 @@
 {
   "hosting": {
     "public": "dist",
+    "projectId": "paynest-2f498",
     "ignore": [
       "firebase.json",
       "**/.*",
