@@ -457,17 +457,46 @@ async function chatWithGPT(prompt, context = {}) {
       - Traffic: ${context.traffic || 30}%
     `;
 
-    const completion = await openai.chat.completions.create({
-      model: 'gpt-4o-mini',
-      messages: [
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: prompt }
-      ],
-      temperature: 0.7,
-      max_tokens: 300
-    });
+    // Retry logic for handling 503 errors
+    let retries = 3;
+    let delay = 1000; // Start with 1 second
 
-    return completion.choices[0].message.content;
+    for (let attempt = 1; attempt <= retries; attempt++) {
+      try {
+        const completion = await openai.chat.completions.create({
+          model: 'gpt-4o-mini',
+          messages: [
+            { role: 'system', content: systemPrompt },
+            { role: 'user', content: prompt }
+          ],
+          temperature: 0.7,
+          max_tokens: 300
+        });
+
+        return completion.choices[0].message.content;
+      } catch (error) {
+        console.error(`AI Error (attempt ${attempt}/${retries}):`, error);
+
+        // Check if it's a 503 or capacity-related error
+        if (error.status === 503 || 
+            (error.message && error.message.includes('capacity')) ||
+            (error.code && error.code === 'MODEL_CAPACITY_EXHAUSTED')) {
+          
+          if (attempt < retries) {
+            console.log(`Retrying in ${delay}ms due to capacity exhaustion...`);
+            await new Promise(resolve => setTimeout(resolve, delay));
+            delay *= 2; // Exponential backoff
+            continue;
+          }
+        }
+
+        // For other errors or if retries exhausted, break and use fallback
+        break;
+      }
+    }
+
+    // If we get here, all retries failed or it's not a retryable error
+    return getLocalFallbackResponse(prompt, context);
   } catch (error) {
     console.error('AI Error:', error);
     return getLocalFallbackResponse(prompt, context);

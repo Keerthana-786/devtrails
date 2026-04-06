@@ -5,6 +5,8 @@ import joblib
 import numpy as np
 import json
 from pathlib import Path
+import time
+import os
 
 app = FastAPI(title="PayNest ML API", version="1.0.0")
 
@@ -398,7 +400,7 @@ def process_zero_touch_claim(trigger_data: AutomatedTriggerInput):
         }
 
     # Auto-approve and process
-    claim_id = f"ZC{Date.now()}{np.random.randint(1000, 9999)}"
+    claim_id = f"ZC{int(time.time() * 1000)}{np.random.randint(1000, 9999)}"
 
     return {
         "status": "AUTO_APPROVED",
@@ -418,4 +420,5 @@ def process_zero_touch_claim(trigger_data: AutomatedTriggerInput):
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="127.0.0.1", port=8001)
+    port = int(os.environ.get("PORT", 8001))
+    uvicorn.run(app, host="0.0.0.0", port=port)

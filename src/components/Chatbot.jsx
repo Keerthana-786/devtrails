@@ -168,21 +168,33 @@ export default function Chatbot() {
     // Add user message about uploading Aadhaar
     setMessages(prev => [...prev, { role: 'user', content: `📄 Uploading Aadhaar card: ${file.name}` }]);
 
-    const processOCR = () => {
-      return new Promise((resolve) => {
-        // For demo purposes, return mock OCR data immediately
-        console.log("Using mock Aadhaar OCR response in chatbot")
-        const extracted = {
-          name: "Amit Kumar",
-          aadhaarNumber: "XXXX XXXX 3456",
-          dateOfBirth: "15/07/1988",
-          gender: "Male",
-          address: "Mumbai, Maharashtra",
-          pincode: "400001",
-          isValidAadhaar: true,
-          confidence: "HIGH"
+    const processOCR = async () => {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = async () => {
+          try {
+            const base64Data = reader.result.split(',')[1];
+            const mimeType = file.type;
+            
+            const res = await fetch(`${API_BASE}/api/aadhaar-ocr`, {
+              method: 'POST',
+              headers: { 
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+              },
+              body: JSON.stringify({ image: base64Data, mimeType })
+            });
+            
+            if (!res.ok) throw new Error('OCR Failed');
+            const data = await res.json();
+            resolve(data.extracted);
+          } catch (err) {
+            console.error("Chatbot OCR Error:", err);
+            reject(err);
+          }
         };
-        resolve(extracted);
+        reader.onerror = error => reject(error);
       });
     };
 

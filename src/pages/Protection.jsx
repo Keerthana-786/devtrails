@@ -444,18 +444,32 @@ export default function Protection({ setTab }) {
   const toggle = (key) => setSettings(s => ({ ...s, [key]: !s[key] }))
   const toggleExpand = (id) => setExpandedPayouts(p => ({ ...p, [id]: !p[id] }))
 
-  // ── Fix 4: Live Premium Breakdown ──────────────────────────────────────────
-  const adj = pricingBreakdown?.adjustment_breakdown || {}
-  const base = pricingBreakdown?.base_calc || 76.50
-  
-  // ── Fix 6: Premium Breakdown with exact details ─────────────────────────
-  const liveBreakdown = [
-    { label: "Base Rate (Standard)", value: 76.50, color: "#6366F1", icon: "📋", tip: "Standard weekly base rate for food delivery workers" },
-    { label: "ML Weather Adjustment", value: -5.00, color: "#10b981", icon: "🌦️", tip: "Clear forecast this week — ML reduced your premium" },
-    { label: "Zone Risk Factor", value: 8.50, color: "#ef4444", icon: "📍", tip: "Andheri West is flood-prone — zone risk factor applied" },
-    { label: "Experience Discount", value: -3.50, color: "#10b981", icon: "🎖️", tip: "AI Veteran badge — 3 months clean claims discount" },
-    { label: "No-Claim Bonus", value: -1.00, color: "#10b981", icon: "🛡️", tip: "Zero fraudulent claims — perfect record bonus" }
-  ]
+  // ── Parametric Pricing: Real-time Breakdown ──────────────────────────────────
+  const liveBreakdown = useMemo(() => {
+    if (!pricingBreakdown) return [
+      { label: "Base Rate (Standard)", value: 76.50, color: "#6366F1", icon: "📋", tip: "Standard weekly base rate for food delivery workers" }
+    ];
+
+    const items = [
+      { label: "Base Rate", value: 50.00, color: "#6366F1", icon: "📋", tip: "Fixed weekly base cost" }
+    ];
+
+    if (pricingBreakdown.weather > 0) {
+      items.push({ label: "Weather Risk Adj.", value: pricingBreakdown.weather, color: "#ef4444", icon: "🌦️", tip: "Increased risk due to forecast conditions" });
+    }
+    if (pricingBreakdown.traffic > 0) {
+      items.push({ label: "Traffic Congestion", value: pricingBreakdown.traffic, color: "#f59e0b", icon: "🚦", tip: "Higher congestion increases delivery time risk" });
+    }
+    if (pricingBreakdown.zone > 0) {
+      items.push({ label: "Zone Surcharge", value: pricingBreakdown.zone, color: "#ef4444", icon: "📍", tip: "Andheri West is a high-disruption zone" });
+    }
+    
+    // Safety discount
+    const discount = -5.50; // Mock safety discount for experienced users
+    items.push({ label: "Safe Rider Discount", value: discount, color: "#10b981", icon: "🎖️", tip: "Your high trust score reduced your premium!" });
+
+    return items;
+  }, [pricingBreakdown]);
 
   const cardStyle = {
     background: 'rgba(22,28,36,0.6)', border: '1px solid rgba(255,255,255,0.05)',
@@ -565,12 +579,11 @@ export default function Protection({ setTab }) {
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px', marginBottom: '24px' }}>
 
-        {/* Missing 5: Premium Breakdown with exact tooltip logic */}
         <div style={cardStyle}>
           {sectionTitle('💡 Dynamic Premium Breakdown')}
           <div style={{ marginBottom: '20px', padding: '14px', background: 'rgba(0,0,0,0.2)', borderRadius: '12px' }}>
             <div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginBottom: '4px' }}>Final Weekly Premium</div>
-            <div style={{ fontSize: '30px', fontWeight: '900', color: '#f59e0b' }}>₹75.50</div>
+            <div style={{ fontSize: '30px', fontWeight: '900', color: '#f59e0b' }}>₹{weeklyPremium.toFixed(2)}</div>
           </div>
           {liveBreakdown.map((b, i) => (
             <div key={i} style={{ marginBottom: '14px', position: 'relative' }}>
@@ -587,7 +600,7 @@ export default function Protection({ setTab }) {
           ))}
           <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: '1px dashed rgba(255,255,255,0.08)', paddingTop: '14px', marginTop: '4px', fontWeight: '800', fontSize: '16px' }}>
             <span style={{ color: 'var(--text-secondary)' }}>FINAL WEEKLY PREMIUM</span>
-            <span style={{ color: '#f59e0b' }}>₹75.50</span>
+            <span style={{ color: '#f59e0b' }}>₹{weeklyPremium.toFixed(2)}</span>
           </div>
         </div>
 

@@ -264,14 +264,17 @@ export default function AuthScreens() {
     try {
       if (isLogin) {
         // --- REAL LOGIN FLOW ---
+        if (otpInput !== '123456') throw new Error('Invalid OTP (Hint: 123456)')
+
         const res = await fetch(`${API_BASE}/api/auth/verify`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ phone, otp: '123456' }) // Demo OTP
+          body: JSON.stringify({ phone, otp: otpInput })
         })
         const data = await res.json()
         if (res.ok) {
           setSuccess(true)
+          localStorage.setItem('paynest_token', data.token) // persist for AppContext
           setTimeout(() => {
             login(data.user)
           }, 600)
@@ -296,16 +299,18 @@ export default function AuthScreens() {
           },
           body: JSON.stringify({ 
             name: name || 'Worker', 
-            partner: platform, 
-            zone: city, 
-            plan: selectedPlan 
+            partner: platform || 'Zomato', 
+            zone: city || 'Mumbai',
+            upiId: pin || 'worker@upi',
+            plan: selectedPlan || 'basic',
+            vehicle: vehicleType || 'bike'
           })
         })
         const oData = await oRes.json()
         if (oRes.ok) {
           setSuccess(true)
           setTimeout(() => {
-            login(oData.user)
+            login(oData.user, vData.token)
           }, 600)
         } else {
           throw new Error(oData.error || 'Onboarding failed')

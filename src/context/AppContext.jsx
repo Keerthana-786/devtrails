@@ -2,7 +2,7 @@ import React, { createContext, useContext, useEffect, useMemo, useRef, useState 
 
 const AppContext = createContext()
 
-const API_BASE = import.meta.env.VITE_API_URL || (import.meta.env.MODE === 'development' ? 'http://localhost:8000' : (typeof window !== 'undefined' ? window.location.origin : 'https://devtrails.onrender.com'))
+const API_BASE = import.meta.env.VITE_API_URL || (import.meta.env.MODE === 'development' ? 'http://localhost:8000' : 'https://paynest-devtrails.onrender.com')
 
 const defaultTranslations = {
   goodMorning: 'Good morning',
@@ -364,9 +364,13 @@ export function AppProvider({ children }) {
   }
 
   useEffect(() => {
-    fetchOrders()
+    if (token) {
+      fetchOrders()
+      fetchDynamicPricing()
+      checkAndTriggerPayout()
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [weather, traffic])
+  }, [weather, traffic, token])
 
   useEffect(() => {
     const recommended = getBestOrders()
@@ -658,22 +662,39 @@ export function AppProvider({ children }) {
     whatIfTraffic, setWhatIfTraffic,
     // Misc
     t: defaultTranslations,
-    addManualPayout: (payoutObj) => {
+    addManualPayout: async (payoutObj) => {
       setPayouts(prev => [payoutObj, ...prev])
-      if (payoutObj.status === 'COMPLETED') {
+      if (payoutObj.status === 'COMPLETED' || payoutObj.status === 'PAID') {
         setWalletBalance(prev => prev + payoutObj.amount)
         addToast(`⚡ Paid! ₹${payoutObj.amount} credited to wallet.`, 'success')
       }
+      // Persist to backend if token exists
+      if (token) {
+        try {
+          await fetch(`${API_BASE}/api/payouts/create`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+            body: JSON.stringify({ payout: payoutObj })
+          })
+        } catch (e) {
+          console.error('Failed to persist payout:', e)
+        }
+      }
     },
-    login: (userData) => {
+    login: (userData, userToken) => {
       setUser(userData)
-      setToken('token-demo-123')
+      if (userToken) {
+        setToken(userToken)
+        localStorage.setItem('paynest_token', userToken)
+      }
+      localStorage.setItem('paynest_user', JSON.stringify(userData))
     },
-    updateUser: (data) => setUser(prev => ({ ...prev, ...data })),
     logout: () => {
       setToken('')
       setUser({})
       setPayouts([])
+      localStorage.removeItem('paynest_token')
+      localStorage.removeItem('paynest_user')
     },
     fetchDynamicPricing,
     checkAndTriggerPayout,
