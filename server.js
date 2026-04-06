@@ -130,6 +130,12 @@ const auth = (req, res, next) => {
 };
 
 // ── Auth Routes ───────────────────────────────────────────────────────────────
+
+// Test CORS endpoint
+app.get('/api/test-cors', (req, res) => {
+  res.json({ message: 'CORS test successful', origin: req.headers.origin });
+});
+
 app.post("/api/auth/otp", (req, res) => {
   const { phone } = req.body;
   const isEmail = phone && phone.includes('@');
