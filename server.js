@@ -28,9 +28,30 @@ app.use(cors({
     "https://devtrails.firebaseapp.com",
     "https://devtrails.onrender.com",
     "https://aara-514dc.web.app",
-    "https://aara-514dc.firebaseapp.com"
+    "https://aara-514dc.firebaseapp.com",
+    "https://paynest-2f498.web.app",
+    "https://paynest-2f498.firebaseapp.com"
   ],
-  credentials: true
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
+}));
+
+// Handle preflight requests explicitly
+app.options('*', cors({
+  origin: [
+    "http://localhost:5173",
+    "https://devtrails.web.app",
+    "https://devtrails.firebaseapp.com",
+    "https://devtrails.onrender.com",
+    "https://aara-514dc.web.app",
+    "https://aara-514dc.firebaseapp.com",
+    "https://paynest-2f498.web.app",
+    "https://paynest-2f498.firebaseapp.com"
+  ],
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
 }));
 
 app.use(express.json({ limit: "10mb" }));
