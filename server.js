@@ -39,30 +39,29 @@ const ML_URL = process.env.ML_URL || "http://localhost:8001";
 const JWT_SECRET = process.env.JWT_SECRET || "paynest_secret_2024";
 
 // Configure CORS for Production (Firebase)
-app.use((req, res, next) => {
-  const origin = req.headers.origin;
-  const allowed = [
-    "https://paynest-2f498.web.app",
-    "https://paynest-2f498.firebaseapp.com",
-    "https://devtrails.web.app",
-    "https://devtrails.firebaseapp.com",
-    "https://devtrails.onrender.com"
-  ];
-  
-  if (origin && allowed.some(a => origin.startsWith(a))) {
-    res.header("Access-Control-Allow-Origin", origin);
-    res.header("Access-Control-Allow-Credentials", "true");
-  }
-  
-  res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
-  res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization");
-
-  if (req.method === 'OPTIONS') {
-    return res.sendStatus(204);
-  }
-
-  next();
-});
+app.use(cors({
+  origin: function (origin, callback) {
+    const allowed = [
+      "https://paynest-2f498.web.app",
+      "https://paynest-2f498.firebaseapp.com",
+      "https://devtrails.web.app",
+      "https://devtrails.firebaseapp.com",
+      "http://localhost:3000",
+      "http://localhost:5173",
+      "http://localhost:4173"
+    ];
+    if (!origin || allowed.includes(origin)) {
+      callback(null, true);
+    } else {
+      // allow anyway to prevent unexpected CORS issues in hackathon, log it
+      console.warn(`[CORS] Warning: Unexpected origin ${origin}`);
+      callback(null, true);
+    }
+  },
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Origin", "X-Requested-With", "Content-Type", "Accept", "Authorization"]
+}));
 
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ limit: "10mb", extended: true }));
