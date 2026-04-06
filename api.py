@@ -8,6 +8,11 @@ from pathlib import Path
 import time
 import os
 
+import warnings
+
+# Suppress sklearn UserWarning for missing feature names (since we predict with numpy arrays)
+warnings.filterwarnings("ignore", category=UserWarning, module="sklearn")
+
 app = FastAPI(title="PayNest ML API", version="1.0.0")
 
 app.add_middleware(
