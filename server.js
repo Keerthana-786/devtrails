@@ -39,23 +39,23 @@ const ML_URL = process.env.ML_URL || "http://localhost:8001";
 const JWT_SECRET = process.env.JWT_SECRET || "paynest_secret_2024";
 
 // Configure CORS for Production (Firebase)
+const allowedOrigins = [
+  "https://paynest-2f498.web.app",
+  "https://paynest-2f498.firebaseapp.com",
+  "https://devtrails.web.app",
+  "https://devtrails.firebaseapp.com",
+  "http://localhost:3000",
+  "http://localhost:5173",
+  "http://localhost:4173"
+];
+
 app.use(cors({
   origin: function (origin, callback) {
-    const allowed = [
-      "https://paynest-2f498.web.app",
-      "https://paynest-2f498.firebaseapp.com",
-      "https://devtrails.web.app",
-      "https://devtrails.firebaseapp.com",
-      "http://localhost:3000",
-      "http://localhost:5173",
-      "http://localhost:4173"
-    ];
-    if (!origin || allowed.includes(origin)) {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin || allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
-      // allow anyway to prevent unexpected CORS issues in hackathon, log it
-      console.warn(`[CORS] Warning: Unexpected origin ${origin}`);
-      callback(null, true);
+      callback(new Error("Not allowed by CORS"));
     }
   },
   credentials: true,
