@@ -40,19 +40,15 @@ const JWT_SECRET = process.env.JWT_SECRET || "paynest_secret_2024";
 
 // Configure CORS for Production (Firebase)
 app.use((req, res, next) => {
-  const allowedOrigins = [
-    "http://localhost:5173",
-    "https://paynest-2f498.web.app",
-    "https://paynest-2f498.firebaseapp.com",
-    "https://devtrails.web.app",
-    "https://devtrails.firebaseapp.com"
-  ];
-
   const origin = req.headers.origin;
 
-  // Check if origin is allowed
-  if (allowedOrigins.includes(origin)) {
-    res.header('Access-Control-Allow-Origin', origin);
+  // For debugging - log the origin
+  console.log('CORS Request from origin:', origin);
+
+  // Allow the specific origin
+  if (origin === 'https://paynest-2f498.web.app') {
+    res.header('Access-Control-Allow-Origin', 'https://paynest-2f498.web.app');
+    console.log('CORS allowed for paynest-2f498.web.app');
   }
 
   // Always set these headers
@@ -62,6 +58,7 @@ app.use((req, res, next) => {
 
   // Handle preflight requests
   if (req.method === 'OPTIONS') {
+    console.log('Handling OPTIONS preflight request');
     res.sendStatus(200);
     return;
   }
@@ -197,7 +194,7 @@ app.post("/api/auth/verify", (req, res) => {
       plan: "basic",
       trustScore: 65,
       monthsActive: 1,
-      balance: 0,
+      walletBalance: 0,
       totalPayouts: 0,
       createdAt: new Date().toISOString(),
     };
@@ -526,7 +523,7 @@ function parseAadhaarText(text) {
 }
 
 app.post("/api/claims/auto-check", auth, async (req, res) => {
-  const user = users.get(req.user.phone);
+  const user = getUser(req.user.phone);
   if (!user) return res.status(404).json({ error: "User not found" });
 
   try {
@@ -605,14 +602,14 @@ app.post("/api/claims/auto-check", auth, async (req, res) => {
           autoProcessed: true
         };
 
-        payouts.set(claim.id, claim);
-        user.balance += payoutAmount;
+        savePayout(claim.id, claim);
+        user.walletBalance = (user.walletBalance || 0) + payoutAmount;
         user.totalPayouts = (user.totalPayouts || 0) + 1;
         claimsCreated.push(claim);
       }
     }
-
-    users.set(req.user.phone, user);
+  
+    saveUser(req.user.phone, user);
 
     res.json({
       success: true,
