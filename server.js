@@ -41,26 +41,29 @@ const JWT_SECRET = process.env.JWT_SECRET || "paynest_secret_2024";
 // Configure CORS for Production (Firebase)
 app.use((req, res, next) => {
   const origin = req.headers.origin;
-
-  // For debugging - log the origin
-  console.log('CORS Request from origin:', origin);
-
-  // Allow the specific origin
-  if (origin === 'https://paynest-2f498.web.app') {
-    res.header('Access-Control-Allow-Origin', 'https://paynest-2f498.web.app');
-    console.log('CORS allowed for paynest-2f498.web.app');
+  const allowed = [
+    "https://paynest-2f498.web.app",
+    "https://paynest-2f498.firebaseapp.com",
+    "https://devtrails.web.app",
+    "https://devtrails.firebaseapp.com",
+    "https://devtrails.onrender.com"
+  ];
+  
+  // Set CORS headers for all requests matching the whitelist
+  if (origin && allowed.some(a => origin.startsWith(a))) {
+    res.header("Access-Control-Allow-Origin", origin);
+    res.header("Access-Control-Allow-Credentials", "true");
+  } else if (!origin) {
+    // For non-browser requests (like curl), set a default
+    res.header("Access-Control-Allow-Origin", "*");
   }
+  
+  res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+  res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization");
 
-  // Always set these headers
-  res.header('Access-Control-Allow-Credentials', 'true');
-  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
-
-  // Handle preflight requests
+  // Handle preflight requests immediately
   if (req.method === 'OPTIONS') {
-    console.log('Handling OPTIONS preflight request');
-    res.sendStatus(200);
-    return;
+    return res.sendStatus(204);
   }
 
   next();
