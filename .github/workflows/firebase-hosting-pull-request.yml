@@ -17,5 +17,5 @@ jobs:
       - uses: FirebaseExtended/action-hosting-deploy@v0
         with:
           repoToken: ${{ secrets.GITHUB_TOKEN }}
-          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_AARA_514DC }}
-          projectId: aara-514dc
+          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_PAYNEST_2F498 }}
+          projectId: paynest-2f498
