@@ -40,16 +40,18 @@ const JWT_SECRET = process.env.JWT_SECRET || "paynest_secret_2024";
 
 // Configure CORS for Production (Firebase)
 app.use((req, res, next) => {
-  // Set CORS headers for all requests
-  res.header('Access-Control-Allow-Origin', 'https://paynest-2f498.web.app');
-  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
-  res.header('Access-Control-Allow-Credentials', 'true');
+  // Always allow the specific origin for now
+  res.header("Access-Control-Allow-Origin", "https://paynest-2f498.web.app");
+  res.header("Access-Control-Allow-Credentials", "true");
+  res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+  res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization");
 
-  // Handle preflight requests
   if (req.method === 'OPTIONS') {
-    res.sendStatus(200);
-    return;
+    return res.sendStatus(204);
+  }
+
+  next();
+});
   }
 
   next();
@@ -125,6 +127,31 @@ const auth = (req, res, next) => {
     res.status(401).json({ error: "Invalid token" });
   }
 };
+
+app.post("/api/payouts/create", auth, (req, res) => {
+  const { payout } = req.body;
+  const user = getUser(req.user.phone);
+  if (!user) return res.status(404).json({ error: "User not found" });
+
+  const payoutId = payout.id || `pay_${Date.now()}`;
+  const newPayout = { 
+    ...payout, 
+    id: payoutId, 
+    userId: user.id,
+    createdAt: payout.createdAt || new Date().toISOString()
+  };
+  
+  savePayout(payoutId, newPayout);
+  
+  // Update user balance if not already updated
+  if (payout.status === 'PAID' || payout.status === 'COMPLETED') {
+    user.walletBalance = (user.walletBalance || 0) + (payout.amount || 0);
+    user.totalPayouts = (user.totalPayouts || 0) + 1;
+    saveUser(req.user.phone, user);
+  }
+
+  res.json({ success: true, payout: newPayout, user });
+});
 
 // ── Auth Routes ───────────────────────────────────────────────────────────────
 
