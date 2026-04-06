@@ -40,6 +40,7 @@ const JWT_SECRET = process.env.JWT_SECRET || "paynest_secret_2024";
 
 // Configure CORS for Production (Firebase)
 app.use((req, res, next) => {
+  // Set CORS headers for all requests
   res.header('Access-Control-Allow-Origin', 'https://paynest-2f498.web.app');
   res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
   res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
@@ -48,9 +49,10 @@ app.use((req, res, next) => {
   // Handle preflight requests
   if (req.method === 'OPTIONS') {
     res.sendStatus(200);
-  } else {
-    next();
+    return;
   }
+
+  next();
 });
 
 app.use(express.json({ limit: "10mb" }));
