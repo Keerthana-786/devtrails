@@ -199,7 +199,7 @@ const AdminDashboard = () => {
                   <span>{metrics?.fraudStats?.underReview || 25}%</span>
                </div>
                <div style={{ fontSize: '12px', display: 'flex', justifyContent: 'space-between' }}>
-                  <span style={{ color: 'var(--success)' }}>Auto-Approve (&lt;30)</span>
+                  <span style={{ color: 'var(--success)' }}>Auto-Approve (Low Risk)</span>
                   <span>{metrics?.fraudStats?.approved || 60}%</span>
                </div>
             </div>

@@ -3,7 +3,7 @@ import { useApp } from '../context/AppContext';
 import { Wallet, CheckCircle, Download, ExternalLink, ArrowRight, Zap, TrendingUp, Clock } from 'lucide-react';
 
 const PayoutHistory = () => {
-  const { payouts } = useApp();
+  const { payouts = [] } = useApp();
 
   useEffect(() => {
     document.title = 'PayNest — Payout History';

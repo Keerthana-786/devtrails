@@ -73,7 +73,7 @@ const RiskDonutChart = ({ zone, seasonal, platform }) => {
 }
 
 export default function RiskProfiling() {
-  const { token, user, weather, traffic, currentLocation } = useApp()
+  const { token = null, user = {}, weather = {}, traffic = {}, currentLocation = {} } = useApp()
   const [zoneRisk, setZoneRisk] = useState(null)
   const [seasonalRisk, setSeasonalRisk] = useState(null)
   const [platformRisk, setPlatformRisk] = useState(null)

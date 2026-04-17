@@ -3,7 +3,7 @@ import { useApp } from '../context/AppContext';
 import { Calendar, Filter, ChevronDown, Download, ExternalLink, ShieldAlert, ShieldCheck } from 'lucide-react';
 
 const ClaimsHistory = () => {
-  const { claims } = useApp();
+  const { claims = [] } = useApp();
   const [filter, setFilter] = useState('All');
   const [statusFilter, setStatusFilter] = useState('All');
 

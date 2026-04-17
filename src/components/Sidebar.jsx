@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, Shield, FileText, Wallet, Lock, BarChart3, Settings, PlayCircle, LogOut } from 'lucide-react';
+import { LayoutDashboard, Shield, FileText, Wallet, Lock, BarChart3, Settings, LogOut } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 
 const Sidebar = () => {
@@ -13,7 +13,6 @@ const Sidebar = () => {
     { icon: <Wallet size={20} />, label: 'Payouts', path: '/payouts' },
     { icon: <Lock size={20} />, label: 'Fraud Shield', path: '/fraud' },
     { icon: <BarChart3 size={20} />, label: 'Insights', path: '/insights' },
-    { icon: <PlayCircle size={20} />, label: 'Demo Script', path: '/demo-script' },
   ];
 
   return (

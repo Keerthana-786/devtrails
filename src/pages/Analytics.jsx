@@ -32,7 +32,7 @@ function ChartCard({ title, children }) {
 }
 
 export default function Analytics() {
-  const { btsScore, daysProtected } = useApp();
+  const { btsScore = 0, daysProtected = 0 } = useApp();
   const payoutChartRef = useRef(null);
   const disruptionChartRef = useRef(null);
   const btsTrendChartRef = useRef(null);

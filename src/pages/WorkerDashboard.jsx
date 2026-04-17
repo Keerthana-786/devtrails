@@ -15,6 +15,7 @@ const WorkerDashboard = () => {
       const res = await fetch(`${config.API_URL}/dashboard`, {
         headers: { 'Authorization': `Bearer ${sessionStorage.getItem('paynest_token')}` }
       });
+      if (!res.ok) throw new Error('API not available');
       const data = await res.json();
       if (data.user) setWorker(data.user);
       if (data.payouts) setClaims(data.payouts.map(p => ({
@@ -26,7 +27,8 @@ const WorkerDashboard = () => {
       if (data.weather) setWeather(data.weather);
       if (data.stats) setStats(data.stats);
     } catch (err) {
-      console.error("Dashboard poll failed", err);
+      // API not available - use mock data from AppContext
+      console.log("Using mock data from AppContext");
     }
   };
 

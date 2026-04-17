@@ -5,7 +5,15 @@ import 'leaflet/dist/leaflet.css'
 import { useApp } from '../context/AppContext.jsx'
 
 export default function SafeMap() {
-  const { currentLocation, weather, traffic, aiLossEstimate, payouts, addToast, expectedEarnings } = useApp()
+  const { 
+    currentLocation = {}, 
+    weather = {}, 
+    traffic = {}, 
+    aiLossEstimate = 0, 
+    payouts = [], 
+    addToast = () => {}, 
+    expectedEarnings = 0 
+  } = useApp()
   const [zones, setZones] = useState([])
   const [showCamera, setShowCamera] = useState(false)
   const [cameraFile, setCameraFile] = useState(null)
