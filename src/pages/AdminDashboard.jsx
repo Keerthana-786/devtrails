@@ -36,6 +36,12 @@ const AdminDashboard = () => {
     return { workers, profit: rev - cost };
   });
 
+  const projection3Y = [
+    { year: '2026 (Launch)', workers: '10,000', revenue: '2.5 Cr', profit: '50L', lossRatio: '62%' },
+    { year: '2027 (Expansion)', workers: '85,000', revenue: '21.2 Cr', profit: '4.8 Cr', lossRatio: '58%' },
+    { year: '2028 (Scale)', workers: '420,000', revenue: '105 Cr', profit: '26 Cr', lossRatio: '54%' },
+  ];
+
   useEffect(() => {
     document.title = 'PayNest — Admin Control';
     const fetchMetrics = async () => {
@@ -67,6 +73,8 @@ const AdminDashboard = () => {
     </div>
   );
 
+  const operatingMargin = metrics?.weeklyRevenue ? (((metrics.weeklyRevenue - metrics.claimsPaid) / metrics.weeklyRevenue) * 100).toFixed(1) : '37.7';
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -83,9 +91,9 @@ const AdminDashboard = () => {
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: '16px' }}>
         {[
           { label: 'Active Policies', val: metrics?.activeWorkers?.toLocaleString() || '10,000', color: 'var(--primary)', icon: <Shield size={14} /> },
-          { label: 'Weekly Revenue', val: `₹${(metrics?.weeklyRevenue / 100000).toFixed(2)}L`, color: 'var(--success)', icon: <TrendingUp size={14} /> },
-          { label: 'Claims Paid', val: `₹${(metrics?.claimsPaid / 100000).toFixed(2)}L`, color: '#3B82F6', icon: <Activity size={14} /> },
-          { label: 'Loss Ratio', val: `${metrics?.lossRatio}%` || '62.3%', color: metrics?.lossRatio < 65 ? 'var(--success)' : 'var(--danger)', icon: <TrendingUp size={14} /> },
+          { label: 'Weekly Revenue', val: `₹${(metrics?.weeklyRevenue / 100000).toFixed(2) || '4.90'}L`, color: 'var(--success)', icon: <TrendingUp size={14} /> },
+          { label: 'Loss Ratio', val: `${metrics?.lossRatio || '62.3'}%`, color: (metrics?.lossRatio || 62.3) < 65 ? 'var(--success)' : 'var(--danger)', icon: <Activity size={14} /> },
+          { label: 'Op. Margin', val: `${operatingMargin}%`, color: '#3B82F6', icon: <Wallet size={14} /> },
           { label: 'Fraud Rejected', val: metrics?.fraudStats?.rejected || '42', color: 'var(--warning)', icon: <AlertTriangle size={14} /> },
           { label: 'Workers Online', val: '8,247', color: '#2DD4BF', icon: <Users size={14} /> },
         ].map((kpi, i) => (
@@ -125,7 +133,7 @@ const AdminDashboard = () => {
       <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 3fr', gap: '24px' }}>
         <div className="card">
           <h3 style={{ fontSize: '18px', marginBottom: '8px' }}>Loss Ratio Gauge</h3>
-          <p style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '32px' }}>Target range: 0-65%</p>
+          <p style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '32px' }}>Industry Avg: 68% | <strong>PayNest: {metrics?.lossRatio || '62.3'}%</strong></p>
           <div style={{ height: '200px', width: '100%', position: 'relative' }}>
              <div style={{ 
                width: '200px', height: '100px', 
@@ -147,7 +155,7 @@ const AdminDashboard = () => {
              </div>
              <div style={{ textAlign: 'center', marginTop: '16px' }}>
                <h2 style={{ fontSize: '32px', color: 'var(--success)' }}>{metrics?.lossRatio || '62.3'}%</h2>
-               <p style={{ fontSize: '12px', color: 'var(--success)', fontWeight: '700' }}>HEALTHY ✅</p>
+               <p style={{ fontSize: '12px', color: 'var(--success)', fontWeight: '700' }}>OUTPERFORMING MARKET ✅</p>
              </div>
           </div>
         </div>
@@ -171,6 +179,33 @@ const AdminDashboard = () => {
             </ResponsiveContainer>
           </div>
         </div>
+      </div>
+
+      {/* 3-Year Projection Section */}
+      <div className="card">
+        <h3 style={{ fontSize: '20px', marginBottom: '24px' }}>3-Year Revenue & Growth roadmap</h3>
+        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+          <thead>
+            <tr style={{ textAlign: 'left', borderBottom: '1px solid var(--card-border)' }}>
+              <th style={{ padding: '16px', color: 'var(--text-muted)', fontSize: '12px' }}>PERIOD</th>
+              <th style={{ padding: '16px', color: 'var(--text-muted)', fontSize: '12px' }}>WORKER BASE</th>
+              <th style={{ padding: '16px', color: 'var(--text-muted)', fontSize: '12px' }}>ANNUAL REVENUE</th>
+              <th style={{ padding: '16px', color: 'var(--text-muted)', fontSize: '12px' }}>OP. PROFIT</th>
+              <th style={{ padding: '16px', color: 'var(--text-muted)', fontSize: '12px' }}>LOSS RATIO</th>
+            </tr>
+          </thead>
+          <tbody>
+            {projection3Y.map((p, i) => (
+              <tr key={i} style={{ borderBottom: i === 2 ? 'none' : '1px solid var(--card-border)' }}>
+                <td style={{ padding: '16px', fontWeight: 'bold' }}>{p.year}</td>
+                <td style={{ padding: '16px' }}>{p.workers}</td>
+                <td style={{ padding: '16px', color: 'var(--success)', fontWeight: 'bold' }}>{p.revenue}</td>
+                <td style={{ padding: '16px', color: 'var(--primary)', fontWeight: 'bold' }}>{p.profit}</td>
+                <td style={{ padding: '16px' }}>{p.lossRatio}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
 
       {/* Fraud Breakdown */}

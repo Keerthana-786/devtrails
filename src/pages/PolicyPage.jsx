@@ -1,9 +1,11 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useApp } from '../context/AppContext';
 import { Shield, CheckCircle, XCircle, CloudRain, Thermometer, Wind, AlertCircle, Ban, Download, RefreshCw, FileText } from 'lucide-react';
+import PolicyCertificateModal from '../components/PolicyCertificateModal';
 
 const PolicyPage = () => {
   const { worker } = useApp();
+  const [isCertModalOpen, setIsCertModalOpen] = useState(false);
 
   useEffect(() => {
     document.title = 'PayNest — My Policy';
@@ -25,8 +27,12 @@ const PolicyPage = () => {
           <p style={{ color: 'var(--text-secondary)' }}>Standard Protection Active • Automatic Renewals On</p>
         </div>
         <div style={{ display: 'flex', gap: '12px' }}>
-          <button className="btn-primary" style={{ background: 'rgba(255,255,255,0.05)', color: 'white', border: '1px solid var(--card-border)' }}>
-            <Download size={18} /> Download Certificate
+          <button 
+            onClick={() => setIsCertModalOpen(true)}
+            className="btn-primary" 
+            style={{ background: 'rgba(255,255,255,0.05)', color: 'white', border: '1px solid var(--card-border)' }}
+          >
+            <Download size={18} /> View Certificate
           </button>
         </div>
       </div>
@@ -58,7 +64,7 @@ const PolicyPage = () => {
               </div>
               <div>
                 <h2 style={{ fontSize: '20px', letterSpacing: '2px' }}>PAYNEST</h2>
-                <p style={{ fontSize: '10px', color: 'var(--primary)', fontWeight: '800' }}>STANDARD PLAN</p>
+                <p style={{ fontSize: '10px', color: 'var(--primary)', fontWeight: '800' }}>{worker.tier === 'pro' ? 'PLATINUM' : (worker.tier === 'basic' ? 'SILVER' : 'GOLD')} PLAN</p>
               </div>
             </div>
 
@@ -76,11 +82,11 @@ const PolicyPage = () => {
               </div>
               <div>
                 <p style={{ fontSize: '10px', color: 'var(--text-muted)', marginBottom: '4px', textTransform: 'uppercase' }}>Daily Coverage</p>
-                <p style={{ fontWeight: '700' }}>₹{worker.coverage_per_day}</p>
+                <p style={{ fontWeight: '700' }}>₹{worker.coverage_per_day || 480}</p>
               </div>
               <div>
                 <p style={{ fontSize: '10px', color: 'var(--text-muted)', marginBottom: '4px', textTransform: 'uppercase' }}>Valid Until</p>
-                <p style={{ fontWeight: '700' }}>{worker.policy_valid_until}</p>
+                <p style={{ fontWeight: '700' }}>{worker.policy_valid_until || '18 Apr 2026'}</p>
               </div>
             </div>
           </div>
@@ -91,7 +97,7 @@ const PolicyPage = () => {
             </div>
             <div>
               <p style={{ fontSize: '10px', color: 'var(--text-muted)', marginBottom: '4px' }}>WEEKLY PREMIUM</p>
-              <h2 style={{ fontSize: '32px' }}>₹{worker.weekly_premium}</h2>
+              <h2 style={{ fontSize: '32px' }}>₹{worker.weeklyPremium || 49}</h2>
             </div>
           </div>
         </div>
@@ -102,6 +108,61 @@ const PolicyPage = () => {
           <h3 style={{ fontSize: '20px' }}>What You're Protected Against</h3>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '12px' }}>
             {Triggers.map((t, i) => (
+              <div key={i} className="card" style={{ padding: '16px', textAlign: 'center', display: 'flex', flexDirection: 'column', gap: '12px', alignItems: 'center' }}>
+                <div style={{ padding: '12px', background: 'rgba(108, 99, 255, 0.05)', borderRadius: '12px' }}>{t.icon}</div>
+                <div>
+                  <h5 style={{ fontSize: '12px', marginBottom: '4px' }}>{t.title}</h5>
+                  <p style={{ fontSize: '10px', color: 'var(--text-muted)' }}>{t.threshold}</p>
+                </div>
+                <span className="badge badge-approved" style={{ fontSize: '9px', padding: '2px 8px' }}>COVERED</span>
+              </div>
+            ))}
+          </div>
+
+          <div className="card" style={{ borderLeft: '4px solid var(--danger)' }}>
+            <h4 style={{ fontSize: '16px', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <Ban size={18} color="var(--danger)" /> What's Excluded (Important)
+            </h4>
+            <div style={{ display: 'flex', gap: '12px' }}>
+              <div style={{ padding: '8px 16px', background: 'rgba(239, 68, 68, 0.05)', borderRadius: '999px', fontSize: '12px', color: 'var(--danger)' }}>Traffic Fines</div>
+              <div style={{ padding: '8px 16px', background: 'rgba(239, 68, 68, 0.05)', borderRadius: '999px', fontSize: '12px', color: 'var(--danger)' }}>App Bans</div>
+              <div style={{ padding: '8px 16px', background: 'rgba(239, 68, 68, 0.05)', borderRadius: '999px', fontSize: '12px', color: 'var(--danger)' }}>Device Damage</div>
+            </div>
+            <p style={{ fontSize: '13px', color: 'var(--text-muted)', marginTop: '16px' }}>
+              PayNest covers <strong>INCOME LOSS ONLY</strong> resulting from external disruptions. Personal accidents and vehicle maintenance are handled under separate standard accidental insurance.
+            </p>
+          </div>
+        </div>
+
+        <div>
+          <h3 style={{ fontSize: '20px', marginBottom: '24px' }}>Policy History</h3>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            {[
+              { week: 'Week 4 (Current)', date: '11 - 18 Apr', plan: 'Standard', status: 'Active' },
+              { week: 'Week 3', date: '04 - 11 Apr', plan: 'Standard', status: 'Expired' },
+              { week: 'Week 2', date: '28 Mar - 04 Apr', plan: 'Standard', status: 'Expired' },
+              { week: 'Week 1', date: '21 - 28 Mar', plan: 'Basic', status: 'Expired' },
+            ].map((p, i) => (
+              <div key={i} className="card" style={{ padding: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', opacity: i === 0 ? 1 : 0.6 }}>
+                <div>
+                  <h4 style={{ fontSize: '14px', marginBottom: '4px' }}>{p.week}</h4>
+                  <p style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{p.date} • {p.plan}</p>
+                </div>
+                <span className={`badge ${p.status === 'Active' ? 'badge-approved' : 'badge-review'}`} style={{ fontSize: '10px' }}>{p.status}</span>
+              </div>
+            ))}
+          </div>
+          <button className="btn-primary" style={{ width: '100%', marginTop: '24px', background: 'rgba(255,255,255,0.02)', border: '1px solid var(--card-border)', color: 'white' }}>
+            <FileText size={18} /> View Terms & Conditions
+          </button>
+        </div>
+      </div>
+
+      <PolicyCertificateModal isOpen={isCertModalOpen} onClose={() => setIsCertModalOpen(false)} />
+    </div>
+  );
+};
+
               <div key={i} className="card" style={{ padding: '16px', textAlign: 'center', display: 'flex', flexDirection: 'column', gap: '12px', alignItems: 'center' }}>
                 <div style={{ padding: '12px', background: 'rgba(108, 99, 255, 0.05)', borderRadius: '12px' }}>{t.icon}</div>
                 <div>
