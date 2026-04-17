@@ -95,9 +95,9 @@ const DemoControls = () => {
           </div>
 
           <div style={{ marginTop: '20px', paddingTop: '16px', borderTop: '1px solid var(--card-border)', fontSize: '11px', color: 'var(--text-muted)' }}>
-            <p><strong>Worker:</strong> {worker.name} | {worker.platform}</p>
-            <p><strong>Zone:</strong> {worker.city} ({worker.pincode})</p>
-            <p><strong>Policy:</strong> {worker.tier.toUpperCase()} — Active</p>
+            <p><strong>Worker:</strong> {worker?.name || 'Guest'} | {worker?.platform || 'N/A'}</p>
+            <p><strong>Zone:</strong> {worker?.city || 'N/A'} ({worker?.pincode || '000000'})</p>
+            <p><strong>Policy:</strong> {worker?.tier?.toUpperCase() || 'STANDARD'} — Active</p>
           </div>
         </div>
       )}

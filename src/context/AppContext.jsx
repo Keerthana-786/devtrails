@@ -23,8 +23,19 @@ export const AppProvider = ({ children }) => {
     weeklyPremium: 49,
     walletBalance: 2400,
     trustScore: 85,
+    tier: 'standard',
     policyValidUntil: '2026-04-20',
   });
+
+  const triggerClaim = (type, value) => {
+    addScanLog(`🚨 DEMO TRIGGER: ${type} (${value})`, 'warning');
+    addNotification({
+      type: 'AMBER',
+      title: 'Disruption Detected',
+      message: `${type} threshold exceeded. AI analysis started...`,
+      time: 'Just now'
+    });
+  };
 
   // Claims History
   const [claims, setClaims] = useState([]);
@@ -85,6 +96,7 @@ export const AppProvider = ({ children }) => {
     weatherData, setWeatherData,
     scanLog, addScanLog,
     addNotification,
+    triggerClaim,
     // Demo & Admin
     isDemo,
     setIsDemo: (val) => {
