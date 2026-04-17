@@ -1,0 +1,58 @@
+{
+  "users": {
+    "9876543210": {
+      "phone": "9876543210",
+      "email": "demo@paynest.com",
+      "name": "John Doe",
+      "zone": "Mumbai",
+      "weeklyPremium": 76.5,
+      "walletBalance": 150,
+      "stabilityScore": 85,
+      "policyStatus": "ACTIVE",
+      "badges": [
+        {
+          "label": "Rain Master",
+          "earned": true
+        },
+        {
+          "label": "Safe Streak",
+          "earned": true
+        },
+        {
+          "label": "Zone Explorer",
+          "earned": false
+        }
+      ],
+      "payouts": [],
+      "activeDisruptions": [],
+      "safeZones": [
+        "Karol Bagh",
+        "Rajouri Garden",
+        "Lajpat Nagar"
+      ],
+      "highRiskHours": [
+        "8-10 AM",
+        "5-7 PM"
+      ],
+      "weather": {
+        "rainfall": 2.5,
+        "temperature": 28,
+        "aqi": 120
+      },
+      "traffic": 45,
+      "pricingBreakdown": {
+        "base": 50,
+        "weather": 15,
+        "traffic": 8,
+        "zone": 3.5
+      },
+      "monthsActive": 6,
+      "trustScore": 85,
+      "partner": "Swiggy",
+      "upiId": "worker@upi",
+      "plan": "Standard",
+      "onboarded": true
+    }
+  },
+  "payouts": {}
+}

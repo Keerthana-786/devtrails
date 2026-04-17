@@ -4,6 +4,7 @@ import axios from "axios";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
 import dotenv from "dotenv";
+import { Resend } from "resend";
 import { chatWithGPT, performAadhaarOCR } from "./chatbot.js";
 import path from "path";
 import { fileURLToPath } from "url";
@@ -13,6 +14,9 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 dotenv.config();
+
+const resend = new Resend(process.env.RESEND_API_KEY || "");
+let otpStore = {};
 
 // ── Persistence Layer ────────────────────────────────────────────────────────
 const DB_PATH = path.join(__dirname, "db.json");
@@ -30,6 +34,16 @@ const saveDB = (data) => {
 
 // Initial load
 let db = loadDB();
+
+// ── Automated Trigger Engine State ──────────────────────────────────────────
+let activeMonitoringLogs = [];
+const addLog = (message) => {
+  const log = { id: Date.now(), time: new Date().toLocaleTimeString(), message };
+  activeMonitoringLogs.unshift(log);
+  if (activeMonitoringLogs.length > 50) activeMonitoringLogs.pop();
+  console.log(`[MONITOR] ${message}`);
+};
+
 
 const app = express();
 const PORT = process.env.PORT || 8000;
@@ -143,14 +157,15 @@ app.post("/api/payouts/create", auth, (req, res) => {
   const newPayout = { 
     ...payout, 
     id: payoutId, 
-    userId: user.id,
+    userId: user.id, // Ensure we use the user's ID
+    userPhone: req.user.phone,
     createdAt: payout.createdAt || new Date().toISOString()
   };
   
   savePayout(payoutId, newPayout);
   
   // Update user balance if not already updated
-  if (payout.status === 'PAID' || payout.status === 'COMPLETED') {
+  if (payout.status === 'PAID' || payout.status === 'COMPLETED' || payout.status === 'SETTLED') {
     user.walletBalance = (user.walletBalance || 0) + (payout.amount || 0);
     user.totalPayouts = (user.totalPayouts || 0) + 1;
     saveUser(req.user.phone, user);
@@ -158,6 +173,7 @@ app.post("/api/payouts/create", auth, (req, res) => {
 
   res.json({ success: true, payout: newPayout, user });
 });
+
 
 // ── Auth Routes ───────────────────────────────────────────────────────────────
 
@@ -172,6 +188,43 @@ app.post("/api/auth/otp", (req, res) => {
   if (!phone || (!isEmail && phone.length !== 10)) return res.status(400).json({ error: "Invalid phone or email" });
   console.log(`OTP sent to ${phone}: 123456`);
   res.json({ success: true, message: `OTP sent to ${isEmail ? 'email' : 'phone'}`, debug_otp: "123456" });
+});
+
+app.post("/api/auth/send-otp", async (req, res) => {
+  const { email } = req.body;
+  if (!email || !email.includes("@")) {
+    return res.status(400).json({ error: "A valid email is required" });
+  }
+
+  const otp = Math.floor(100000 + Math.random() * 900000).toString();
+  otpStore[email] = otp;
+
+  try {
+    await resend.emails.send({
+      from: process.env.RESEND_FROM_EMAIL || "onboarding@resend.dev",
+      to: email,
+      subject: "Your PayNest OTP Code",
+      html: `<h2>Your OTP is: ${otp}</h2><p>Use this code to verify your account.</p>`,
+    });
+    res.json({ message: "OTP sent successfully" });
+  } catch (error) {
+    console.error("Resend error:", error?.message || error);
+    res.status(500).json({ error: "Failed to send OTP email" });
+  }
+});
+
+app.post("/api/auth/verify-otp", (req, res) => {
+  const { email, otp } = req.body;
+  if (!email || !otp) {
+    return res.status(400).json({ error: "Email and OTP are required" });
+  }
+
+  if (otpStore[email] === otp.toString()) {
+    delete otpStore[email];
+    return res.json({ success: true });
+  }
+
+  res.status(400).json({ success: false, error: "Invalid OTP" });
 });
 
 app.post("/api/auth/verify", (req, res) => {
@@ -254,19 +307,58 @@ app.get("/api/dashboard", auth, async (req, res) => {
   }
 
   const allPayouts = getPayouts();
-  const userPayouts = Object.values(allPayouts).filter((p) => p.userId === user.id);
+  const userPayouts = Object.values(allPayouts).filter((p) => p.userPhone === req.user.phone);
 
   res.json({
     user,
     weather,
+    monitoringLogs: activeMonitoringLogs,
     payouts: userPayouts.slice(-10).reverse(),
     stats: {
       totalPayouts: userPayouts.length,
-      totalEarned: userPayouts.reduce((s, p) => s + p.amount, 0),
+      totalEarned: userPayouts.reduce((s, p) => s + (p.amount || 0), 0),
       thisMonth: userPayouts.filter((p) => new Date(p.createdAt).getMonth() === new Date().getMonth()).length,
     },
   });
 });
+
+// ── Admin Dashboard Metrics ──────────────────────────────────────────────────
+app.get("/api/admin/metrics", auth, (req, res) => {
+  const users = Object.values(getUsers());
+  const payouts = Object.values(getPayouts());
+  
+  const activeWorkers = users.filter(u => u.policyStatus === 'ACTIVE').length;
+  const totalRevenue = users.length * 49; // Fixed premium model for stats
+  const claimsPaid = payouts.filter(p => p.status === 'SETTLED' || p.status === 'COMPLETED').reduce((s, p) => s + (p.amount || 0), 0);
+  const lossRatio = totalRevenue > 0 ? (claimsPaid / totalRevenue) : 0;
+  
+  const fraudStats = {
+    totalChecked: payouts.length,
+    rejected: payouts.filter(p => p.fraudScore > 70).length,
+    underReview: payouts.filter(p => p.fraudScore > 30 && p.fraudScore <= 70).length,
+    approved: payouts.filter(p => p.fraudScore <= 30).length
+  };
+
+  res.json({
+    activeWorkers,
+    weeklyRevenue: totalRevenue,
+    claimsPaid,
+    lossRatio: (lossRatio * 100).toFixed(2),
+    fraudStats,
+    revenueVsClaims: [
+       { week: 'W1', revenue: 49000, claims: 21000 },
+       { week: 'W2', revenue: 49000, claims: 25000 },
+       { week: 'W3', revenue: 51000, claims: 18000 },
+       { week: 'W4', revenue: 48000, claims: 32000 },
+       { week: 'W5', revenue: 52000, claims: 28000 },
+       { week: 'W6', revenue: 50000, claims: 35000 },
+       { week: 'W7', revenue: 49000, claims: 30000 },
+       { week: 'W8', revenue: 50000, claims: claimsPaid || 32000 },
+    ],
+    predictedClaims: 31500
+  });
+});
+
 
 // ── TRUE AI PROXIES (Forwarding directly to FastAPI) ───────────────────────
 
@@ -519,109 +611,137 @@ function parseAadhaarText(text) {
   return extracted;
 }
 
-app.post("/api/claims/auto-check", auth, async (req, res) => {
-  const user = getUser(req.user.phone);
-  if (!user) return res.status(404).json({ error: "User not found" });
+// ── AI Parametric Logic ─────────────────────────────────────────────────────
 
-  try {
-    // Get current weather data
-    const weatherResponse = await axios.get(
-      "https://api.open-meteo.com/v1/forecast?latitude=19.0760&longitude=72.8777&current=temperature_2m,precipitation,wind_speed_10m,relative_humidity_2m&forecast_days=1",
-      { timeout: 3000 }
-    );
-    const current = weatherResponse.data.current;
-    const weather = {
-      rainfall: current.precipitation || 0,
-      temperature: current.temperature_2m || 32,
-      windSpeed: current.wind_speed_10m || 0,
-      humidity: current.relative_humidity_2m || 70,
-      aqi: 85, // Mock AQI for now
-      visibility: 8
-    };
-
-    // Check for disruptions using ML
-    const disruptionCheck = await axios.post(`${ML_URL}/triggers/check-disruptions`, {
-      worker_id: user.id,
-      current_lat: 19.0760, // Mock location
-      current_lng: 72.8777,
-      timestamp: new Date().toISOString(),
-      weather_condition: weather.rainfall > 30 ? "rain" : weather.temperature > 40 ? "heat" : "normal",
-      traffic_speed_kmh: weather.rainfall > 20 ? 15 : 25, // Mock traffic speed
-      orders_active: Math.floor(Math.random() * 10) // Mock active orders
-    });
-
-    const activeTriggers = disruptionCheck.data.active_triggers || [];
-    const autoEligible = activeTriggers.filter(t => t.auto_claim_eligible);
-
-    let claimsCreated = [];
-
-    // Process auto-eligible claims
-    for (const trigger of autoEligible) {
-      // Calculate payout using loss prediction
-      const lossResponse = await axios.post(`${ML_URL}/predict/loss`, {
-        hourly_rate: 80,
-        normal_work_hours: 6,
-        rainfall_mm: weather.rainfall,
-        traffic_disruption: weather.rainfall > 20 ? 0.8 : 0.2,
-        aqi: weather.aqi,
-        day_of_week: new Date().getDay(),
-        is_peak_hour: new Date().getHours() >= 10 && new Date().getHours() <= 14 ? 1 : 0,
-        city_index: 2
-      });
-
-      const payoutAmount = Math.round(lossResponse.data.predicted_income_loss_inr || (80 * 6 * 0.5));
-
-      // Fraud check
-      const fraudResponse = await axios.post(`${ML_URL}/predict/fraud`, {
-        gps_deviation_km: 0.1,
-        location_consistency: 0.95,
-        claim_frequency_30d: 1,
-        account_age_months: user.monthsActive || 1,
-        multiple_claims_per_day: 0,
-        orders_during_disruption: 1,
-        avg_payout_inr: 350,
-        trust_score: user.trustScore || 65,
-        zone_risk_tier: 2
-      });
-
-      if (fraudResponse.data.verdict === "AUTO_APPROVE") {
-        // Create automatic claim
-        const claim = {
-          id: `auto_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-          userId: user.id,
-          trigger: trigger.trigger_id,
-          type: trigger.type,
-          severity: trigger.severity,
-          amount: payoutAmount,
-          status: "COMPLETED",
-          upiRef: `AUTO${Date.now()}`,
-          createdAt: new Date().toISOString(),
-          autoProcessed: true
-        };
-
-        savePayout(claim.id, claim);
-        user.walletBalance = (user.walletBalance || 0) + payoutAmount;
-        user.totalPayouts = (user.totalPayouts || 0) + 1;
-        claimsCreated.push(claim);
-      }
-    }
+const calculateWeeklyPremium = (data) => {
+  const { rainfallZone, aqiZone, dailyEarnings } = data;
+  let premium = 29; // Base
+  if (rainfallZone) premium += 10;
+  if (aqiZone) premium += 5;
+  if (dailyEarnings > 800) premium += 5;
   
-    saveUser(req.user.phone, user);
+  // Risk score 0-100 based on the same factors
+  let riskScore = 20;
+  if (rainfallZone) riskScore += 30;
+  if (aqiZone) riskScore += 20;
+  if (dailyEarnings > 800) riskScore += 15;
+  
+  return { premium, riskScore };
+};
 
-    res.json({
-      success: true,
-      weather,
-      activeTriggers: activeTriggers.length,
-      autoClaimsCreated: claimsCreated.length,
-      claims: claimsCreated,
-      message: claimsCreated.length > 0 ? `${claimsCreated.length} automatic claims processed` : "No disruptions detected"
-    });
-
-  } catch (error) {
-    console.error("Auto claim check failed:", error);
-    res.status(500).json({ error: "Automatic claim processing failed" });
+const runFraudDetection = (claim, user, weather) => {
+  let layers = [];
+  let score = 0;
+  
+  // 1. GPS Validation (Reject if distance > 5km)
+  // Mock distance for simulation
+  const distance = Math.random() * 8; 
+  if (distance > 5) {
+    score += 40;
+    layers.push(`GPS Warning: Distance ${distance.toFixed(1)}km > 5km limit`);
   }
+  
+  // 2. Weather Cross-Check
+  if (weather.rainfall < 10 && claim.trigger === 'Heavy Rain') {
+    score += 30;
+    layers.push("Weather Warning: API shows low rainfall for Rain claim");
+  }
+  
+  // 3. Frequency Check (Reject if >3 claims/week)
+  const userPayouts = Object.values(getPayouts()).filter(p => p.userPhone === user.phone);
+  const recentClaims = userPayouts.filter(p => (Date.now() - new Date(p.createdAt).getTime()) < 7 * 24 * 3600 * 1000).length;
+  if (recentClaims > 3) {
+    score += 40;
+    layers.push(`Frequency Warning: ${recentClaims} claims this week`);
+  }
+  
+  // 4. Pattern Detection (Flag new accounts + high claims)
+  if (user.monthsActive < 1 && claim.amount > 500) {
+    score += 20;
+    layers.push("Pattern Warning: New account with high value claim");
+  }
+  
+  let verdict = "APPROVED";
+  if (score > 70) verdict = "REJECTED";
+  else if (score > 30) verdict = "REVIEW";
+  
+  console.log(`[FRAUD] Decision for ${user.phone}: ${verdict} (Score: ${score})`);
+  console.log(`[FRAUD] Evidence: ${layers.join(" | ")}`);
+  
+  return { score, verdict, layers };
+};
+
+// ── Automated Trigger Engine (Real-time monitoring every 30s) ────────────────
+
+const startMonitoring = () => {
+  setInterval(async () => {
+    addLog("Fetching environmental data...");
+    
+    // Simulate current state
+    const rainfall = 30 + Math.random() * 20; // Simulated rainfall
+    const temp = 38 + Math.random() * 10;     // Simulated temp
+    const aqi = 300 + Math.random() * 100;    // Simulated AQI
+    const curfew = Math.random() > 0.95;      // Rare curfew signal
+    
+    addLog(`Data: Rain ${rainfall.toFixed(1)}mm/hr | Temp ${temp.toFixed(1)}°C | AQI ${aqi.toFixed(0)}`);
+    
+    let triggerFound = null;
+    if (rainfall > 35) triggerFound = { type: 'Heavy Rain', severity: 'High' };
+    else if (temp > 43) triggerFound = { type: 'Extreme Heat', severity: 'High' };
+    else if (aqi > 350) triggerFound = { type: 'High AQI', severity: 'High' };
+    else if (curfew) triggerFound = { type: 'Curfew', severity: 'Emergency' };
+    
+    if (triggerFound) {
+      addLog(`🚨 DISRUPTION DETECTED: ${triggerFound.type}`);
+      
+      const users = Object.values(getUsers()).filter(u => u.policyStatus === 'ACTIVE');
+      
+      for (const user of users) {
+        // Calculate Payout: (daily_income / 8) × hours_lost × 0.6
+        const dailyIncome = 850; // Mock average
+        const hoursLost = 4;      // Mock lost hours
+        const payoutAmount = Math.round((dailyIncome / 8) * hoursLost * 0.6);
+        
+        const claimId = `auto_${Date.now()}_${user.phone.slice(-4)}`;
+        const fraudResult = runFraudDetection({ trigger: triggerFound.type, amount: payoutAmount }, user, { rainfall, temp, aqi });
+        
+        const claim = {
+          id: claimId,
+          userId: user.id,
+          userPhone: user.phone,
+          userName: user.name,
+          trigger: triggerFound.type,
+          amount: payoutAmount,
+          status: fraudResult.verdict === 'APPROVED' ? 'SETTLED' : fraudResult.verdict === 'REJECTED' ? 'REJECTED' : 'PENDING',
+          fraudScore: fraudResult.score,
+          fraudEvidence: fraudResult.layers,
+          upiRef: fraudResult.verdict === 'APPROVED' ? `UPI${Math.floor(Math.random()*1000000000)}` : null,
+          createdAt: new Date().toISOString()
+        };
+        
+        savePayout(claimId, claim);
+        
+        if (claim.status === 'SETTLED') {
+          user.walletBalance = (user.walletBalance || 0) + payoutAmount;
+          user.totalPayouts = (user.totalPayouts || 0) + 1;
+          saveUser(user.phone, user);
+          addLog(`✅ Payout of ₹${payoutAmount} sent to ${user.name}`);
+        } else {
+          addLog(`🛡️ Claim for ${user.name} sent to ${claim.status} (Fraud Score: ${claim.fraudScore})`);
+        }
+      }
+    } else {
+      addLog("AUTO MODE ACTIVE - Monitoring stable conditions...");
+    }
+  }, 30000);
+};
+
+startMonitoring();
+
+app.post("/api/claims/auto-check", auth, async (req, res) => {
+  res.json({ success: true, message: "Monitoring engine is running in background every 30s" });
 });
+
 
 // ── Health Check ────────────────────────────────────────────────────────────
 app.get("/health", (req, res) => {

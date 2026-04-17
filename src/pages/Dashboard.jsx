@@ -4,7 +4,11 @@ import { useApp } from '../context/AppContext.jsx'
 import { StormPrepMode } from '../components/StormPrepCard.jsx'
 import { BTSCard } from '../components/BTSCard.jsx'
 import { WeeklyReport } from '../components/WeeklyReport.jsx'
-import PayoutProcessingModal from '../components/PayoutProcessingModal.jsx'
+import { LiveTriggerMonitor } from '../components/LiveTriggerMonitor.jsx'
+import SocialImpact from '../components/SocialImpact.jsx'
+import ClaimJourney from '../components/ClaimJourney.jsx'
+import NotificationBell from '../components/NotificationBell.jsx'
+import DemoControlPanel from '../components/DemoControlPanel.jsx'
 
 // ── Animated number that counts up from 0 → value ────────────────────────────
 function ProgressiveNumber({ value, isStreaming }) {
@@ -153,13 +157,40 @@ export default function Dashboard() {
             <div style={{ fontSize: '11px', color: '#94A3B8' }}>PayNest Power Meter</div>
             <div style={{ fontSize: '13px', fontWeight: '700', color: powerMeter.color }}>{powerMeter.label} · {powerMeter.score}%</div>
           </div>
+          <NotificationBell />
         </div>
       </div>
+
+      <SocialImpact />
 
       {/* ── GAMIFICATION BADGE STRIP ───────────────────────────────────────── */}
       <div style={{ marginBottom: '24px', display: 'flex', gap: '10px', flexWrap: 'wrap', padding: '16px', background: 'rgba(22,28,36,0.5)', border: '1px solid rgba(255,255,255,0.04)', borderRadius: '16px' }}>
         <span style={{ fontSize: '12px', color: 'var(--text-secondary)', alignSelf: 'center', marginRight: '4px' }}>🏆 Badges:</span>
         {badges.map(b => <BadgePill key={b.id} badge={b} />)}
+      </div>
+
+      {/* ── FRAUD PROTECTION STATS ─────────────────────────────────────────── */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '24px' }}>
+        <div style={{
+          background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)',
+          borderRadius: '16px', padding: '16px', display: 'flex', alignItems: 'center', gap: '14px'
+        }}>
+          <span style={{ fontSize: '24px' }}>🛡️</span>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontSize: '11px', color: '#888', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Fraud Attempts Blocked</div>
+            <div style={{ fontSize: '24px', fontWeight: '900', color: '#ef4444' }}>3 <span style={{ fontSize: '12px', color: '#888' }}>this week</span></div>
+          </div>
+        </div>
+        <div style={{
+          background: 'rgba(16,185,129,0.08)', border: '1px solid rgba(16,185,129,0.2)',
+          borderRadius: '16px', padding: '16px', display: 'flex', alignItems: 'center', gap: '14px'
+        }}>
+          <span style={{ fontSize: '24px' }}>💰</span>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontSize: '11px', color: '#888', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Amount Protected</div>
+            <div style={{ fontSize: '24px', fontWeight: '900', color: '#10b981' }}>₹4,200 <span style={{ fontSize: '12px', color: '#888' }}>saved</span></div>
+          </div>
+        </div>
       </div>
 
       {/* Unique Feature 2: Storm Prep */}
@@ -178,60 +209,55 @@ export default function Dashboard() {
       )}
 
       {/* ── TOP ROW: Orders | Policy + Wallet ─────────────────────────────── */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1.2fr) minmax(0,1fr)', gap: '24px', marginBottom: '24px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1fr) minmax(0,1.3fr)', gap: '24px', marginBottom: '24px' }}>
 
         {/* LIVE ORDERS */}
-        <div style={{ background: 'rgba(22,28,36,0.6)', border: '1px solid #10B981', borderRadius: '20px', padding: '24px' }}>
-          <h2 style={{ fontSize: '18px', fontWeight: '700', fontFamily: "'Space Grotesk', sans-serif", margin: '0 0 16px 0', display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <span style={{ width: '8px', height: '8px', background: '#10B981', borderRadius: '50%', boxShadow: '0 0 8px #10B981', animation: 'pulse 1.5s infinite', display: 'inline-block' }} />
-            📦 Live Orders Near You
+        <div style={{ background: 'rgba(22,28,36,0.6)', border: '1px solid #10B981', borderRadius: '16px', padding: '16px', height: 'fit-content' }}>
+          <h2 style={{ fontSize: '14px', fontWeight: '800', fontFamily: "'Space Grotesk', sans-serif", margin: '0 0 12px 0', display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <span style={{ width: '6px', height: '6px', background: '#10B981', borderRadius: '50%', boxShadow: '0 0 6px #10B981', animation: 'pulse 1.5s infinite', display: 'inline-block' }} />
+            📦 Live Orders
           </h2>
 
-          <div style={{ marginBottom: '16px', padding: '16px', background: 'rgba(59,130,246,0.12)', border: '1px solid rgba(59,130,246,0.3)', borderRadius: '14px', boxShadow: '0 4px 12px rgba(59,130,246,0.1)' }}>
-            <div style={{ fontSize: '13px', fontWeight: '800', color: '#60A5FA', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <span style={{ fontSize: '16px' }}>🤖</span> AI STRATEGIC ADVISOR
+          <div style={{ marginBottom: '12px', padding: '12px', background: 'rgba(59,130,246,0.08)', border: '1px solid rgba(59,130,246,0.2)', borderRadius: '10px', boxShadow: '0 2px 8px rgba(0,0,0,0.2)' }}>
+            <div style={{ fontSize: '10px', fontWeight: '800', color: '#60A5FA', marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+              <span style={{ fontSize: '12px' }}>🤖</span> AI STRATEGIC ADVISOR
             </div>
-            <div style={{ fontSize: '13px', color: '#CBD5E1', lineHeight: '1.4' }}>
+            <div style={{ fontSize: '10.5px', color: '#CBD5E1', lineHeight: '1.2' }}>
               {aiAlerts && aiAlerts.length > 0 ? (
-                <ul style={{ margin: 0, paddingLeft: '18px' }}>
-                  {aiAlerts.map((alert, idx) => <li key={idx} style={{ marginBottom: '4px' }}>{alert}</li>)}
+                <ul style={{ margin: 0, paddingLeft: '14px' }}>
+                  {aiAlerts.map((alert, idx) => <li key={idx} style={{ marginBottom: '2px' }}>{alert}</li>)}
                 </ul>
               ) : (
-                "Conditions optimal. ML predicts stable earnings for the next 4 hours. No manual action required."
+                "Conditions optimal."
               )}
             </div>
-            {bestOrders.length > 0 && (
-              <div style={{ marginTop: '12px', paddingTop: '10px', borderTop: '1px solid rgba(59,130,246,0.2)', fontSize: '12px', fontWeight: '600', color: '#10B981' }}>
-                🎯 Recommended Pick: {bestOrders[0].id} (₹{bestOrders[0].payout})
-              </div>
-            )}
           </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', maxHeight: '320px', overflowY: 'auto' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
             {orders.length === 0 ? (
-              <div style={{ textAlign: 'center', padding: '20px', color: 'var(--text-secondary)' }}>No orders active.</div>
+              <div style={{ textAlign: 'center', padding: '8px', color: 'var(--text-secondary)', fontSize: '11px' }}>No orders active.</div>
             ) : orders.map(order => {
               const isRec = bestOrders.some(b => b.id === order.id)
               const isHigh = order.risk_level === 'HIGH'
               return (
                 <div key={order.id} style={{
-                  display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '14px',
-                  background: isHigh ? 'rgba(239,68,68,0.05)' : 'rgba(0,0,0,0.2)', borderRadius: '12px',
-                  border: `1px solid ${isRec ? '#3B82F6' : isHigh ? 'rgba(239,68,68,0.2)' : 'rgba(255,255,255,0.03)'}`
+                  display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '6px 10px',
+                  background: isHigh ? 'rgba(239,68,68,0.05)' : 'rgba(0,0,0,0.15)', borderRadius: '8px',
+                  border: `1px solid ${isRec ? 'rgba(59,130,246,0.3)' : isHigh ? 'rgba(239,68,68,0.2)' : 'rgba(255,255,255,0.02)'}`
                 }}>
                   <div>
-                    <div style={{ fontSize: '13px', fontWeight: '600', marginBottom: '4px', display: 'flex', gap: '8px', alignItems: 'center' }}>
+                    <div style={{ fontSize: '11px', fontWeight: '600', marginBottom: '2px', display: 'flex', gap: '6px', alignItems: 'center' }}>
                       {order.distance_km} km
-                      {isHigh && <span style={{ fontSize: '10px', background: '#EF4444', color: '#fff', padding: '1px 6px', borderRadius: '4px' }}>HIGH RISK</span>}
-                      {isRec && <span style={{ fontSize: '10px', background: '#3B82F6', color: '#fff', padding: '1px 6px', borderRadius: '4px' }}>AI PICK</span>}
+                      {isHigh && <span style={{ fontSize: '9px', background: '#EF4444', color: '#fff', padding: '1px 4px', borderRadius: '3px' }}>HIGH RISK</span>}
+                      {isRec && <span style={{ fontSize: '9px', background: '#3B82F6', color: '#fff', padding: '1px 4px', borderRadius: '3px' }}>AI PICK</span>}
                     </div>
-                    <div style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>{order.id}</div>
+                    <div style={{ fontSize: '10px', color: 'var(--text-secondary)' }}>{order.id}</div>
                   </div>
-                  <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-                    <div style={{ fontSize: '16px', fontWeight: '800', color: isHigh ? '#475569' : '#10B981' }}>₹{order.payout}</div>
+                  <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                    <div style={{ fontSize: '13px', fontWeight: '800', color: isHigh ? '#475569' : '#10B981' }}>₹{order.payout}</div>
                     <button onClick={() => acceptOrder(order.id)} style={{
                       background: isHigh ? 'transparent' : '#10B981', color: isHigh ? '#475569' : '#000',
-                      border: isHigh ? '1px dashed #EF4444' : 'none', padding: '7px 14px', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', fontSize: '12px'
+                      border: isHigh ? '1px dashed #EF4444' : 'none', padding: '5px 10px', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold', fontSize: '10px'
                     }}>{isHigh ? 'Avoid' : 'Accept'}</button>
                   </div>
                 </div>
@@ -304,6 +330,9 @@ export default function Dashboard() {
       <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1.2fr) minmax(0,1fr)', gap: '24px' }}>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+          {/* Live Trigger Monitor */}
+          <LiveTriggerMonitor />
+
           {/* Active Disruptions */}
           <div style={{ background: 'rgba(22,28,36,0.6)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '20px', padding: '24px' }}>
             <h2 style={{ fontSize: '17px', fontWeight: '700', fontFamily: "'Space Grotesk', sans-serif", margin: '0 0 16px 0' }}>🚨 Live Triggers</h2>
@@ -411,10 +440,11 @@ export default function Dashboard() {
               aqi = {weather.aqi}<br />
               ai_loss_est = ₹{aiLossEstimate.toFixed(0)}<br />
               orders_active = {orders.length}
-            </div>
           </div>
         </div>
       </div>
+
+    </div>
     </div>
   )
 }

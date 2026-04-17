@@ -1,5 +1,6 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useApp } from '../context/AppContext.jsx'
+import config from '../config.js'
  
 const API_BASE = import.meta.env.VITE_API_URL || (import.meta.env.MODE === 'development' ? 'http://localhost:8000' : (typeof window !== 'undefined' ? window.location.origin : 'https://devtrails.onrender.com'));
 
@@ -181,12 +182,21 @@ export default function AuthScreens() {
   
   const [loading, setLoading] = useState(false)
   const [success, setSuccess] = useState(false)
+  const [isForgotPassword, setIsForgotPassword] = useState(false)
+  const [resetAddress, setResetAddress] = useState('')
+  const [resetMessage, setResetMessage] = useState('')
+  const [resetErrors, setResetErrors] = useState({})
+
   const startSignup = () => {
     setIsLogin(false)
     setOnboardingStep(1)
     setStepErrors({})
     setSuccess(false)
     setLoading(false)
+    setIsForgotPassword(false)
+    setResetAddress('')
+    setResetMessage('')
+    setResetErrors({})
   }
   const [aadhaarFile, setAadhaarFile] = useState(null)
   const [aadhaarState, setAadhaarState] = useState('idle') // idle, analyzing, success, invalid, error
@@ -206,7 +216,7 @@ export default function AuthScreens() {
   }, [])
 
   const isEmail = phone.includes('@');
-  const isValid = isEmail ? /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(phone) : phone.replace(/\D/g, '').length >= 10 && (isLogin ? password : true)
+  const isValid = isEmail ? /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(phone) : phone.replace(/\D/g, '').length >= 10 && (isLogin ? (otpInput.length === 6) : true)
 
   const [onboardingStep, setOnboardingStep] = useState(0) // 0: Login, 1-3: Signup steps
   const [platform, setPlatform] = useState('Zomato')
@@ -249,6 +259,28 @@ export default function AuthScreens() {
   }
 
   const handleAction = async () => {
+    if (isForgotPassword) {
+      setLoading(true)
+      setResetErrors({})
+      setResetMessage('')
+
+      const cleanAddress = resetAddress.trim()
+      const isEmailAddress = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanAddress)
+      const isPhoneNumber = /^\+?\d{10,15}$/.test(cleanAddress.replace(/\s+/g, ''))
+
+      if (!cleanAddress || (!isEmailAddress && !isPhoneNumber)) {
+        setResetErrors({ resetAddress: 'Enter a valid phone or email to reset password' })
+        setLoading(false)
+        triggerShake()
+        return
+      }
+
+      await new Promise(resolve => setTimeout(resolve, 700))
+      setResetMessage(`If an account exists for ${cleanAddress}, reset instructions have been sent.`)
+      setLoading(false)
+      return
+    }
+
     if (onboardingStep > 0 && onboardingStep <= 3) {
       if (!validateStep(onboardingStep)) return
       setIsLogin(false)
@@ -263,8 +295,10 @@ export default function AuthScreens() {
 
     try {
       if (isLogin) {
-        // --- REAL LOGIN FLOW ---
-        if (otpInput !== '123456') throw new Error('Invalid OTP (Hint: 123456)')
+        // --- DEMO LOGIN FLOW (accepts any 6-digit OTP) ---
+        if (!otpInput || otpInput.length !== 6 || !/^\d{6}$/.test(otpInput)) {
+          throw new Error('Please enter a valid 6-digit OTP')
+        }
 
         const res = await fetch(`${API_BASE}/api/auth/verify`, {
           method: 'POST',
@@ -301,9 +335,9 @@ export default function AuthScreens() {
             name: name || 'Worker', 
             partner: platform || 'Zomato', 
             zone: city || 'Mumbai',
-            upiId: pin || 'worker@upi',
+            upiId: 'worker@upi',
             plan: selectedPlan || 'basic',
-            vehicle: vehicleType || 'bike'
+            vehicle: vehicle || 'bike'
           })
         })
         const oData = await oRes.json()
@@ -433,7 +467,11 @@ export default function AuthScreens() {
           <div className="field-row">
             <div className="field-label">OTP (Demo: 123456)</div>
             <div style={{ fontSize: '11px', color: '#888', marginBottom: '6px' }}>Demo OTP: 123456</div>
-            <input className={`auth-field ${stepErrors.otp ? 'error-border' : ''}`} type="text" placeholder="123456" value={otpInput} onChange={e => { setOtpInput(e.target.value.slice(0, 6)); if(stepErrors.otp) setStepErrors(prev => ({...prev, otp: null })) }} />
+            <input className={`auth-field ${stepErrors.otp ? 'error-border' : ''}`} type="text" placeholder="123456" value={otpInput} onChange={e => { 
+              const value = e.target.value.replace(/\D/g, '').slice(0, 6); // Only digits, max 6
+              setOtpInput(value); 
+              if(stepErrors.otp) setStepErrors(prev => ({...prev, otp: null })) 
+            }} />
             {stepErrors.otp && <div className="error-text">{stepErrors.otp}</div>}
           </div>
 
@@ -667,6 +705,48 @@ export default function AuthScreens() {
     }
 
     // Default login form
+    if (isForgotPassword) {
+      return (
+        <div style={{ animation: 'formIn 0.5s ease both' }}>
+          <div style={{ color: '#f0a000', fontSize: '12px', fontWeight: '800', marginBottom: '10px' }}>PASSWORD RESET</div>
+          <div className="field-row">
+            <div className="field-label">Registered phone or email</div>
+            <input
+              className={`auth-field ${resetErrors.resetAddress ? 'error-border' : ''}`}
+              type="text"
+              placeholder="e.g. +91 98765 43210 or user@email.com"
+              value={resetAddress}
+              onChange={e => { setResetAddress(e.target.value); if (resetErrors.resetAddress) setResetErrors({}) }}
+            />
+            {resetErrors.resetAddress && <div className="error-text">{resetErrors.resetAddress}</div>}
+          </div>
+          {resetMessage && <div className="error-text" style={{ color: '#10b981', marginBottom: '14px' }}>{resetMessage}</div>}
+          <div className="actions-row">
+            <button className="btn-login" disabled={loading} onClick={handleAction}>
+              {loading ? 'Sending...' : 'Send reset link'}
+            </button>
+            <span className="act-link" style={{ fontSize: '13px' }} onClick={() => {
+              setIsForgotPassword(false)
+              setResetAddress('')
+              setResetMessage('')
+              setResetErrors({})
+            }}>Back to login</span>
+          </div>
+          <div className="links-row" style={{ marginTop: '18px' }}>
+            <span className="act-link" onClick={startSignup}>Create account</span>
+            <span className="sep">|</span>
+            <span className="act-link" onClick={() => {
+              setIsForgotPassword(true)
+              setResetAddress(phone)
+              setStepErrors({})
+              setResetMessage('')
+              setResetErrors({})
+            }}>Forgot password?</span>
+          </div>
+        </div>
+      )
+    }
+
     return (
       <>
         <div className="field-row">
@@ -674,8 +754,12 @@ export default function AuthScreens() {
           <input className="auth-field" type="text" placeholder="e.g. +91 98765 43210 or user@email.com" value={phone} onChange={e => setPhone(e.target.value)} />
         </div>
         <div className="field-row">
-          <div className="field-label">Password</div>
-          <input className="auth-field" type="password" placeholder="Enter your password" value={password} onChange={e => setPassword(e.target.value)} />
+          <div className="field-label">OTP (Demo: 123456)</div>
+          <div style={{ fontSize: '11px', color: '#888', marginBottom: '6px' }}>Demo OTP: 123456</div>
+          <input className="auth-field" type="text" placeholder="123456" value={otpInput} onChange={e => { 
+            const value = e.target.value.replace(/\D/g, '').slice(0, 6); // Only digits, max 6
+            setOtpInput(value); 
+          }} />
         </div>
         <div className="actions-row">
           <button className="btn-login" disabled={!isValid || loading} onClick={handleAction}>
@@ -689,7 +773,37 @@ export default function AuthScreens() {
         <div className="links-row">
           <span className="act-link" onClick={startSignup}>Create account</span>
           <span className="sep">|</span>
-          <span className="act-link">Forgot password?</span>
+          <span className="act-link" onClick={() => {
+            setIsForgotPassword(true)
+            setResetAddress(phone)
+            setStepErrors({})
+            setResetMessage('')
+            setResetErrors({})
+          }}>Forgot password?</span>
+        </div>
+
+        <div style={{ marginTop: '32px', paddingTop: '24px', borderTop: '1px solid rgba(255,255,255,0.1)' }}>
+          <button 
+            onClick={() => {
+              sessionStorage.setItem('paynest_mode', 'demo');
+              login(config.DEMO_WORKER, 'demo_token');
+            }}
+            style={{
+              width: '100%', background: '#10B981', color: '#fff', border: 'none',
+              padding: '16px', borderRadius: '14px', fontSize: '15px', fontWeight: '800',
+              cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px',
+              boxShadow: '0 8px 24px rgba(16,185,129,0.25)', transition: 'transform 0.2s'
+            }}
+            onMouseOver={e => e.currentTarget.style.transform = 'scale(1.02)'}
+            onMouseOut={e => e.currentTarget.style.transform = 'scale(1)'}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span style={{ fontSize: '18px' }}>▶</span> Watch Live Demo
+            </div>
+            <div style={{ fontSize: '11px', fontWeight: '500', opacity: 0.9 }}>
+              See how PayNest protects delivery partners — no signup needed
+            </div>
+          </button>
         </div>
       </>
     )

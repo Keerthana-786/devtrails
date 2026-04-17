@@ -4,6 +4,7 @@ import { useApp } from '../context/AppContext.jsx'
 import { EarningsMaximizer } from '../components/EarningsMaximizer.jsx'
 import { FraudShield } from '../components/FraudShield.jsx'
 import { AIExplanation } from '../components/AIExplanation.jsx'
+import { LiveTriggerMonitor } from '../components/LiveTriggerMonitor.jsx'
 import jsPDF from 'jspdf'
 import html2canvas from 'html2canvas'
 
@@ -183,7 +184,7 @@ function PolicyCertificate({ user, onClose }) {
             Daily Cap: ₹600 <br />
             Weekly Cap: ₹2,500 <br />
             <div style={{ marginTop: '8px' }}>
-              <span style={{ color: '#ef4444', fontWeight: '700' }}>Exclusions:</span> Health · Life · Accidents · Vehicle repairs
+              <span style={{ color: '#ef4444', fontWeight: '700' }}>Exclusions:</span> Traffic fines · App bans · Device damage
             </div>
           </div>
         </div>
@@ -366,6 +367,11 @@ export default function Protection({ setTab }) {
   // ── FEATURE 1: Simulator Logic ──────────────────────────────────────────
   const [simState, setSimState] = useState({ active: false, type: '', step: 0 })
   const [walletFlash, setWalletFlash] = useState(false)
+  
+  // ── FEATURE: Fraud Simulation Logic ────────────────────────────────────
+  const [fraudState, setFraudState] = useState({ active: false, step: 0 })
+  const [fraudBlockedThisWeek] = useState(3)
+  const [amountProtected] = useState(4200)
 
   const simulate = (type) => {
     setSimState({ active: true, type, step: 0 })
@@ -441,7 +447,31 @@ export default function Protection({ setTab }) {
     }, currentDelay + (900 + Math.random() * 300))
   }
 
-  const toggle = (key) => setSettings(s => ({ ...s, [key]: !s[key] }))
+  const simulateFraud = () => {
+    setFraudState({ active: true, step: 0 })
+    
+    // Step-by-step fraud detection sequence
+    const steps = [
+      { delay: 800 },  // Step 0: Incoming claim
+      { delay: 1200 }, // Step 1: GPS mismatch check
+      { delay: 1000 }, // Step 2: Claim frequency check
+      { delay: 1500 }, // Step 3: ML model running
+      { delay: 1000 }  // Step 4: Decision - BLOCKED
+    ]
+
+    let currentDelay = 0
+    steps.forEach((s, i) => {
+      currentDelay += s.delay
+      setTimeout(() => {
+        setFraudState(prev => ({ ...prev, step: i + 1 }))
+      }, currentDelay)
+    })
+
+    // Auto close after complete
+    setTimeout(() => {
+      setFraudState({ active: false, step: 0 })
+    }, currentDelay + 2000)
+  }
   const toggleExpand = (id) => setExpandedPayouts(p => ({ ...p, [id]: !p[id] }))
 
   // ── Parametric Pricing: Real-time Breakdown ──────────────────────────────────
@@ -494,6 +524,7 @@ export default function Protection({ setTab }) {
         .sim-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 1000; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(10px); }
         .check-item { opacity: 0; transform: translateY(10px); animation: fadeInS 0.4s ease forwards; margin-bottom: 12px; font-size: 14px; font-weight: 600; color: #10b981; }
         @keyframes fadeInS { to { opacity: 1; transform: translateY(0); } }
+        @keyframes fraudReveal { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
         .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 2000; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(8px); }
         .certificate-modal { background: #1a1a2e; border: 1px solid rgba(255,255,255,0.1); border-radius: 24px; width: 550px; padding: 0; overflow: hidden; box-shadow: 0 0 30px rgba(0,0,0,0.5); }
         @media print {
@@ -530,6 +561,96 @@ export default function Protection({ setTab }) {
               {simState.step >= 3 && <div className="check-item">✓ Speed check: &lt; 20 km/h (stationary)</div>}
               {simState.step >= 4 && <div className="check-item">✓ Fraud score: 0.08 — CLEAN</div>}
               {simState.step >= 5 && <div className="check-item" style={{ color: '#f59e0b', fontSize: '18px', marginTop: '20px' }}>✓ Decision: AUTO_PAYOUT</div>}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Fraud Detection Overlay */}
+      {fraudState.active && (
+        <div className="sim-overlay">
+          <div style={{ background: '#1a0f0f', padding: '40px', borderRadius: '24px', border: '2px solid #ef4444', width: '520px', boxShadow: '0 0 60px rgba(239,68,68,0.3)' }}>
+            <div style={{ textAlign: 'center', marginBottom: '30px' }}>
+              <div style={{ fontSize: '32px', marginBottom: '12px' }}>⚠️</div>
+              <h3 style={{ fontSize: '20px', fontWeight: '900', color: '#ef4444', margin: 0 }}>
+                FRAUD DETECTION IN PROGRESS
+              </h3>
+            </div>
+
+            <div style={{ marginBottom: '24px', padding: '16px', background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', borderRadius: '12px', fontSize: '13px', color: '#fca5a5', fontWeight: '600' }}>
+              {fraudState.step >= 1 ? (
+                <div>📍 Incoming claim: Worker reports rain at Connaught Place</div>
+              ) : (
+                <div style={{ opacity: 0.5 }}>⏳ Initializing fraud detection...</div>
+              )}
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              {/* GPS Check */}
+              {fraudState.step >= 2 && (
+                <div style={{ 
+                  animation: 'fraudReveal 0.4s ease forwards',
+                  padding: '14px', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: '10px'
+                }}>
+                  <div style={{ color: '#ef4444', fontWeight: '700', fontSize: '12px', marginBottom: '8px' }}>🔍 Checking GPS location...</div>
+                  <div style={{ fontSize: '11px', color: '#cbd5e1', fontFamily: 'monospace', lineHeight: '1.5' }}>
+                    <div>Device GPS: 28.6315°N, 77.2167°E (Connaught Place)</div>
+                    <div>Photo GPS:  19.0760°N, 72.8777°E (Mumbai)</div>
+                    <div style={{ color: '#ef4444', fontWeight: '700', marginTop: '6px' }}>⚠️ MISMATCH: 1,400 km deviation detected!</div>
+                  </div>
+                </div>
+              )}
+
+              {/* Frequency Check */}
+              {fraudState.step >= 3 && (
+                <div style={{ 
+                  animation: 'fraudReveal 0.4s ease forwards',
+                  padding: '14px', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: '10px'
+                }}>
+                  <div style={{ color: '#ef4444', fontWeight: '700', fontSize: '12px', marginBottom: '8px' }}>🔍 Checking claim frequency...</div>
+                  <div style={{ fontSize: '11px', color: '#cbd5e1', fontFamily: 'monospace', lineHeight: '1.5' }}>
+                    <div>Claims in last 7 days: 6</div>
+                    <div style={{ color: '#ef4444', fontWeight: '700', marginTop: '6px' }}>⚠️ ANOMALY: Unusually high frequency detected!</div>
+                  </div>
+                </div>
+              )}
+
+              {/* ML Model Check */}
+              {fraudState.step >= 4 && (
+                <div style={{ 
+                  animation: 'fraudReveal 0.4s ease forwards',
+                  padding: '14px', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: '10px'
+                }}>
+                  <div style={{ color: '#ef4444', fontWeight: '700', fontSize: '12px', marginBottom: '8px' }}>🔍 Running Isolation Forest ML model...</div>
+                  <div style={{ fontSize: '11px', color: '#cbd5e1', fontFamily: 'monospace', lineHeight: '1.5' }}>
+                    <div>Fraud score: 0.87</div>
+                    <div style={{ color: '#ef4444', fontWeight: '700', marginTop: '6px' }}>⚠️ HIGH FRAUD PROBABILITY (threshold: 0.30)</div>
+                  </div>
+                </div>
+              )}
+
+              {/* Final Decision */}
+              {fraudState.step >= 5 && (
+                <div style={{ 
+                  animation: 'fraudReveal 0.4s ease forwards',
+                  padding: '16px', background: 'rgba(239,68,68,0.2)', border: '2px solid #ef4444', borderRadius: '12px',
+                  marginTop: '12px'
+                }}>
+                  <div style={{ color: '#ef4444', fontWeight: '900', fontSize: '16px', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    🚫 CLAIM BLOCKED
+                  </div>
+                  <div style={{ fontSize: '11px', color: '#fca5a5', lineHeight: '1.6', fontFamily: 'monospace' }}>
+                    Account flagged for review<br/>
+                    Fraud score: 0.87 — exceeds 0.70 block threshold<br/>
+                    <br/>
+                    <span style={{ fontWeight: '700', color: '#ef4444' }}>Actions taken automatically:</span><br/>
+                    ✓ Claim rejected<br/>
+                    ✓ Account flagged<br/>
+                    ✓ Fraud team notified<br/>
+                    ✓ Worker account suspended pending review
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -575,6 +696,50 @@ export default function Protection({ setTab }) {
         <button onClick={() => simulate('RAIN')} style={{ background: 'rgba(59,130,246,0.1)', border: '1px solid rgba(59,130,246,0.2)', color: '#fff', padding: '12px 20px', borderRadius: '12px', cursor: 'pointer', fontWeight: '700' }}>🌧️ Rain (75mm)</button>
         <button onClick={() => simulate('HEAT')} style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.2)', color: '#fff', padding: '12px 20px', borderRadius: '12px', cursor: 'pointer', fontWeight: '700' }}>🌡️ Heat (47°C)</button>
         <button onClick={() => simulate('AQI')} style={{ background: 'rgba(245,158,11,0.1)', border: '1px solid rgba(245,158,11,0.2)', color: '#fff', padding: '12px 20px', borderRadius: '12px', cursor: 'pointer', fontWeight: '700' }}>☣️ AQI (420)</button>
+      </div>
+
+      {/* FEATURE 2: Fraud Simulation Section */}
+      <div style={{ ...cardStyle, marginBottom: '24px', display: 'flex', gap: '16px', alignItems: 'center', background: 'rgba(239,68,68,0.05)', border: '1px solid rgba(239,68,68,0.2)' }}>
+        <div style={{ marginRight: 'auto' }}>
+          <div style={{ fontSize: '14px', fontWeight: '800', color: '#ef4444', marginBottom: '4px' }}>🔐 Fraud Defense Lab</div>
+          <div style={{ fontSize: '12px', color: '#888' }}>See fraud detection in action with live AI verification.</div>
+        </div>
+        <button onClick={simulateFraud} style={{ background: 'rgba(239,68,68,0.2)', border: '2px solid #ef4444', color: '#ef4444', padding: '12px 24px', borderRadius: '12px', cursor: 'pointer', fontWeight: '800', transition: 'all 0.2s' }}>🚨 Simulate Fraud Attempt</button>
+      </div>
+
+      {/* FEATURE 2B: Fraud Protection Stats */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '24px' }}>
+        <div style={{ ...cardStyle, background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
+            <span style={{ fontSize: '28px' }}>🛡️</span>
+            <div>
+              <div style={{ fontSize: '11px', color: '#888', textTransform: 'uppercase', fontWeight: '700' }}>Fraud Attempts Blocked</div>
+              <div style={{ fontSize: '32px', fontWeight: '900', color: '#ef4444' }}>{fraudBlockedThisWeek}</div>
+              <div style={{ fontSize: '11px', color: '#888' }}>This week</div>
+            </div>
+          </div>
+          <div style={{ padding: '12px', background: 'rgba(0,0,0,0.2)', borderRadius: '8px', fontSize: '11px', color: '#cbd5e1', borderLeft: '3px solid #ef4444', fontFamily: 'monospace' }}>
+            <div>✓ Account A762: GPS mismatch detected</div>
+            <div>✓ Account B841: Duplicate claims flagged</div>
+            <div>✓ Account C293: Speed anomaly caught</div>
+          </div>
+        </div>
+
+        <div style={{ ...cardStyle, background: 'rgba(16,185,129,0.08)', border: '1px solid rgba(16,185,129,0.2)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
+            <span style={{ fontSize: '28px' }}>💰</span>
+            <div>
+              <div style={{ fontSize: '11px', color: '#888', textTransform: 'uppercase', fontWeight: '700' }}>Amount Protected</div>
+              <div style={{ fontSize: '32px', fontWeight: '900', color: '#10b981' }}>₹{amountProtected.toLocaleString()}</div>
+              <div style={{ fontSize: '11px', color: '#888' }}>Fraudulent payouts prevented</div>
+            </div>
+          </div>
+          <div style={{ padding: '12px', background: 'rgba(0,0,0,0.2)', borderRadius: '8px', fontSize: '11px', color: '#cbd5e1', borderLeft: '3px solid #10b981', fontFamily: 'monospace' }}>
+            <div>⚠️ Account A762: ₹1,840 saved</div>
+            <div>⚠️ Account B841: ₹1,500 saved</div>
+            <div>⚠️ Account C293: ₹860 saved</div>
+          </div>
+        </div>
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px', marginBottom: '24px' }}>

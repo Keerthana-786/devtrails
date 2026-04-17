@@ -1,188 +1,158 @@
-import React, { useState } from 'react'
-import { useApp } from '../context/AppContext.jsx'
-import { Card, Badge, Btn } from '../components/UI.jsx'
+import React, { useEffect } from 'react';
+import { useApp } from '../context/AppContext';
+import { Shield, CheckCircle, XCircle, CloudRain, Thermometer, Wind, AlertCircle, Ban, Download, RefreshCw, FileText } from 'lucide-react';
 
-const css = `
-  @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@500;700&display=swap');
-  :root {
-    --bg-main: #0B0E14;
-    --card-bg: rgba(22, 28, 36, 0.6);
-    --card-border: rgba(255, 255, 255, 0.04);
-    --accent-blue: #3B82F6;
-    --accent-green: #10B981;
-    --accent-red: #EF4444;
-    --text-primary: #FFFFFF;
-    --text-secondary: #94A3B8;
-  }
-  @keyframes fadeUp {
-    from { opacity: 0; transform: translateY(20px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
-  .dash-card {
-    background: var(--card-bg);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border: 1px solid var(--card-border);
-    border-radius: 20px;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
-    padding: 24px;
-    margin-bottom: 20px;
-  }
-  .section-nav button {
-    flex: 1; padding: 14px; border: 1px solid rgba(255,255,255,0.05); border-radius: 12px;
-    background: rgba(0,0,0,0.3); color: var(--text-secondary); font-family: 'Outfit'; font-weight: 600; cursor: pointer; transition: 0.3s;
-  }
-  .section-nav button.active {
-    background: rgba(59, 130, 246, 0.1); border-color: rgba(59, 130, 246, 0.5); color: var(--accent-blue);
-  }
-`
+const PolicyPage = () => {
+  const { worker } = useApp();
 
-export default function PolicyPage() {
-  const { user, payouts, weeklyPremium, pricingBreakdown } = useApp()
-  const [selectedSection, setSelectedSection] = useState('overview')
+  useEffect(() => {
+    document.title = 'PayNest — My Policy';
+  }, []);
 
-  const plan = {
-    name: user?.plan === 'premium' ? 'Premium' : user?.plan === 'enterprise' ? 'Enterprise' : 'Basic',
-    maxPayout: user?.plan === 'premium' ? 800 : user?.plan === 'enterprise' ? 1200 : 500,
-    color: user?.plan === 'premium' ? '#1A73E8' : user?.plan === 'enterprise' ? '#E23744' : '#3AB757'
-  }
-
-  const getNextDeductionDate = () => {
-    const today = new Date();
-    const nextSunday = new Date(today);
-    nextSunday.setDate(today.getDate() + (7 - today.getDay()) % 7 || 7);
-    return nextSunday.toLocaleDateString('en-IN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
-  }
-
-  const sections = {
-    overview: {
-      title: 'Policy Overview',
-      content: (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: '24px' }}>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-            <h3 style={{ fontSize: '16px', fontWeight: '700', color: 'var(--text-primary)', fontFamily: "'Space Grotesk', sans-serif", marginBottom: '8px' }}>
-              Your Current Plan
-            </h3>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-              <Badge label={plan.name} color={plan.color} />
-              <div style={{ fontSize: '14px', color: 'var(--text-secondary)' }}>
-                Zero-Touch Parametric Structure
-              </div>
-            </div>
-            <div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '8px' }}>
-              Next deduction: {getNextDeductionDate()}
-            </div>
-          </div>
-
-          <div style={{ marginBottom: '20px' }}>
-            <h3 style={{ fontSize: '16px', fontWeight: '700', color: 'var(--text-primary)', fontFamily: "'Space Grotesk', sans-serif", marginBottom: '12px' }}>
-              Coverage Details
-            </h3>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '12px' }}>
-              <div style={{ padding: '12px', background: 'rgba(0,0,0,0.3)', borderRadius: '8px' }}>
-                <div style={{ fontSize: '18px', fontWeight: '700', color: '#E23744' }}>₹{plan.maxPayout}/claim</div>
-                <div style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>Max Limit Per Disruption</div>
-              </div>
-              <div style={{ padding: '12px', background: 'rgba(0,0,0,0.3)', borderRadius: '8px' }}>
-                <div style={{ fontSize: '18px', fontWeight: '700', color: 'var(--text-primary)', fontFamily: "'Space Grotesk', sans-serif" }}>24/7</div>
-                <div style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>AI Monitoring Active</div>
-              </div>
-            </div>
-          </div>
-
-          <div style={{ marginBottom: '20px' }}>
-            <h3 style={{ fontSize: '16px', fontWeight: '700', color: 'var(--text-primary)', fontFamily: "'Space Grotesk', sans-serif", marginBottom: '6px' }}>
-              Dynamic Premium Details
-            </h3>
-            <div style={{ backgroundColor: 'rgba(0,0,0,0.2)', padding: '20px', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.05)' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '16px', fontSize: '15px' }}>
-                <span style={{color: 'var(--text-secondary)'}}>Base Rate:</span>
-                <span style={{fontWeight: '700'}}>₹76.50/week</span>
-              </div>
-              
-              <div style={{ borderTop: '1px dashed rgba(255,255,255,0.1)', marginTop: '20px', paddingTop: '20px', display: 'flex', justifyContent: 'space-between', fontWeight: '800', fontSize: '20px', fontFamily: "'Space Grotesk', sans-serif" }}>
-                <span>Final Weekly Premium:</span>
-                <span style={{color: 'var(--accent-blue)'}}>₹{weeklyPremium.toFixed(2)}/week</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      )
-    },
-    claims: {
-      title: 'Auto-Claims Log',
-      content: (
-        <div>
-          <div style={{ marginBottom: '20px', padding: '16px', background: 'rgba(16, 185, 129, 0.1)', border: '1px solid rgba(16, 185, 129, 0.3)', borderRadius: '8px' }}>
-             <div style={{ fontSize: '14px', fontWeight: '700', color: '#10B981', marginBottom: '4px' }}>🛡 Zero-Touch Operations Active</div>
-             <p style={{ margin: 0, fontSize: '12px', color: '#6EE7B7' }}>
-               Manual claims are disabled. Our AI engine actively monitors your parameters (weather, traffic, orders) and pays out instantly if disruptions exceed risk tolerances.
-             </p>
-          </div>
-          <div>
-            <h3 style={{ fontSize: '16px', fontWeight: '700', color: 'var(--text-primary)', fontFamily: "'Space Grotesk', sans-serif", marginBottom: '12px' }}>
-              Recent Zero-Touch Claims
-            </h3>
-            {(payouts || []).length === 0 ? (
-              <div style={{ textAlign: 'center', padding: '20px', color: 'var(--text-secondary)' }}>
-                No active auto-claims
-              </div>
-            ) : (
-              (payouts || []).map((claim) => (
-                <Card key={claim?.id || Math.random()} elevated style={{ marginBottom: '12px', padding: '12px' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <div>
-                      <div style={{ fontSize: '14px', fontWeight: '600', color: 'var(--text-primary)', fontFamily: "'Space Grotesk', sans-serif", display: 'flex', alignItems: 'center', gap: '6px' }}>
-                        {claim.aiGenerated ? '🤖 AI Disruption Trigger' : 'Trigger'} 
-                      </div>
-                      <div style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>
-                        {new Date(claim.createdAt).toLocaleString()} • ID: {claim.id.substring(4, 12)}
-                      </div>
-                    </div>
-                    <div style={{ textAlign: 'right' }}>
-                      <div style={{ fontSize: '16px', fontWeight: '700', color: '#3AB757' }}>
-                        ₹{claim.amount}
-                      </div>
-                      <Badge
-                        label={claim.status}
-                        color={claim.status === 'COMPLETED' ? '#3AB757' : '#F59E0B'}
-                      />
-                    </div>
-                  </div>
-                </Card>
-              ))
-            )}
-          </div>
-        </div>
-      )
-    }
-  }
+  const Triggers = [
+    { icon: <CloudRain color="var(--primary)" />, title: 'Heavy Rainfall', threshold: '> 35mm/hr', status: 'COVERED' },
+    { icon: <Thermometer color="var(--primary)" />, title: 'Extreme Heat', threshold: '> 43°C', status: 'COVERED' },
+    { icon: <Wind color="var(--primary)" />, title: 'Severe Pollution', threshold: 'AQI > 350', status: 'COVERED' },
+    { icon: <AlertCircle color="var(--primary)" />, title: 'Storm Alert', threshold: 'IMD Red Alert', status: 'COVERED' },
+    { icon: <Ban color="var(--primary)" />, title: 'Curfew/Strike', threshold: 'Order drop > 80%', status: 'COVERED' },
+  ];
 
   return (
-    <div style={{ padding: '40px', background: 'var(--bg-main)', minHeight: '100vh', fontFamily: "'Outfit', sans-serif", color: 'var(--text-primary)', maxWidth: '1400px', margin: '0 auto' }}>
-      <style>{css}</style>
-      <div style={{ marginBottom: '32px' }}>
-        <h1 style={{ fontSize: '32px', fontWeight: '900', color: 'var(--text-primary)', fontFamily: "'Space Grotesk', sans-serif", marginBottom: '8px' }}>
-          Policy Details
-        </h1>
-        <p style={{ fontSize: '15px', color: 'var(--text-secondary)' }}>
-          Review your zero-touch parametric coverages
-        </p>
-      </div>
-
-      <div className="dash-card">
-        <div className="section-nav" style={{ display: 'flex', gap: '12px' }}>
-          {Object.entries(sections).map(([key, section]) => (
-            <button key={key} className={selectedSection === key ? 'active' : ''} onClick={() => setSelectedSection(key)}>
-              {section.title}
-            </button>
-          ))}
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '40px' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div>
+          <h1 style={{ fontSize: '32px', marginBottom: '8px' }}>My Policy</h1>
+          <p style={{ color: 'var(--text-secondary)' }}>Standard Protection Active • Automatic Renewals On</p>
+        </div>
+        <div style={{ display: 'flex', gap: '12px' }}>
+          <button className="btn-primary" style={{ background: 'rgba(255,255,255,0.05)', color: 'white', border: '1px solid var(--card-border)' }}>
+            <Download size={18} /> Download Certificate
+          </button>
         </div>
       </div>
 
-      <div className="dash-card" style={{ animation: "fadeUp 0.4s ease" }}>
-        {sections[selectedSection].content}
+      {/* Physical Card Style */}
+      <div style={{ 
+        background: 'linear-gradient(135deg, #6C63FF 0%, #1A1A2E 100%)',
+        borderRadius: '24px',
+        padding: '1px', // for border effect
+        boxShadow: '0 20px 40px rgba(108, 99, 255, 0.2)'
+      }}>
+        <div style={{
+          background: 'var(--card-bg)',
+          borderRadius: '23px',
+          padding: '40px',
+          display: 'flex',
+          justifyContent: 'space-between',
+          backgroundImage: 'radial-gradient(circle at top right, rgba(108, 99, 255, 0.1), transparent)',
+          position: 'relative',
+          overflow: 'hidden'
+        }}>
+          {/* Decorative shield */}
+          <Shield size={200} style={{ position: 'absolute', right: '-40px', bottom: '-40px', opacity: 0.05, transform: 'rotate(-15deg)' }} />
+          
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '32px', position: 'relative', zIndex: 1 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+              <div style={{ width: '48px', height: '48px', background: 'var(--primary)', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <Shield color="white" fill="white" size={24} />
+              </div>
+              <div>
+                <h2 style={{ fontSize: '20px', letterSpacing: '2px' }}>PAYNEST</h2>
+                <p style={{ fontSize: '10px', color: 'var(--primary)', fontWeight: '800' }}>STANDARD PLAN</p>
+              </div>
+            </div>
+
+            <div>
+              <h3 style={{ fontSize: '28px', marginBottom: '4px' }}>{worker.name}</h3>
+              <p style={{ fontSize: '14px', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                {worker.platform} Partner • {worker.city} <CheckCircle size={14} color="var(--success)" />
+              </p>
+            </div>
+
+            <div style={{ display: 'flex', gap: '48px' }}>
+              <div>
+                <p style={{ fontSize: '10px', color: 'var(--text-muted)', marginBottom: '4px', textTransform: 'uppercase' }}>Policy ID</p>
+                <p style={{ fontWeight: '700', fontFamily: 'monospace' }}>PNT-2026-8821</p>
+              </div>
+              <div>
+                <p style={{ fontSize: '10px', color: 'var(--text-muted)', marginBottom: '4px', textTransform: 'uppercase' }}>Daily Coverage</p>
+                <p style={{ fontWeight: '700' }}>₹{worker.coverage_per_day}</p>
+              </div>
+              <div>
+                <p style={{ fontSize: '10px', color: 'var(--text-muted)', marginBottom: '4px', textTransform: 'uppercase' }}>Valid Until</p>
+                <p style={{ fontWeight: '700' }}>{worker.policy_valid_until}</p>
+              </div>
+            </div>
+          </div>
+
+          <div style={{ textAlign: 'right', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', position: 'relative', zIndex: 1 }}>
+            <div className="badge badge-approved" style={{ fontSize: '14px', padding: '8px 16px' }}>
+              <span className="pulse-dot" /> ACTIVE POLICY
+            </div>
+            <div>
+              <p style={{ fontSize: '10px', color: 'var(--text-muted)', marginBottom: '4px' }}>WEEKLY PREMIUM</p>
+              <h2 style={{ fontSize: '32px' }}>₹{worker.weekly_premium}</h2>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '24px' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+          <h3 style={{ fontSize: '20px' }}>What You're Protected Against</h3>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '12px' }}>
+            {Triggers.map((t, i) => (
+              <div key={i} className="card" style={{ padding: '16px', textAlign: 'center', display: 'flex', flexDirection: 'column', gap: '12px', alignItems: 'center' }}>
+                <div style={{ padding: '12px', background: 'rgba(108, 99, 255, 0.05)', borderRadius: '12px' }}>{t.icon}</div>
+                <div>
+                  <h5 style={{ fontSize: '12px', marginBottom: '4px' }}>{t.title}</h5>
+                  <p style={{ fontSize: '10px', color: 'var(--text-muted)' }}>{t.threshold}</p>
+                </div>
+                <span className="badge badge-approved" style={{ fontSize: '9px', padding: '2px 8px' }}>COVERED</span>
+              </div>
+            ))}
+          </div>
+
+          <div className="card" style={{ borderLeft: '4px solid var(--danger)' }}>
+            <h4 style={{ fontSize: '16px', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <Ban size={18} color="var(--danger)" /> What's Excluded (Important)
+            </h4>
+            <div style={{ display: 'flex', gap: '12px' }}>
+              <div style={{ padding: '8px 16px', background: 'rgba(239, 68, 68, 0.05)', borderRadius: '999px', fontSize: '12px', color: 'var(--danger)' }}>Traffic Fines</div>
+              <div style={{ padding: '8px 16px', background: 'rgba(239, 68, 68, 0.05)', borderRadius: '999px', fontSize: '12px', color: 'var(--danger)' }}>App Bans</div>
+              <div style={{ padding: '8px 16px', background: 'rgba(239, 68, 68, 0.05)', borderRadius: '999px', fontSize: '12px', color: 'var(--danger)' }}>Device Damage</div>
+            </div>
+            <p style={{ fontSize: '13px', color: 'var(--text-muted)', marginTop: '16px' }}>
+              PayNest covers <strong>INCOME LOSS ONLY</strong> resulting from external disruptions. Personal accidents and vehicle maintenance are handled under separate standard accidental insurance.
+            </p>
+          </div>
+        </div>
+
+        <div>
+          <h3 style={{ fontSize: '20px', marginBottom: '24px' }}>Policy History</h3>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            {[
+              { week: 'Week 4 (Current)', date: '11 - 18 Apr', plan: 'Standard', status: 'Active' },
+              { week: 'Week 3', date: '04 - 11 Apr', plan: 'Standard', status: 'Expired' },
+              { week: 'Week 2', date: '28 Mar - 04 Apr', plan: 'Standard', status: 'Expired' },
+              { week: 'Week 1', date: '21 - 28 Mar', plan: 'Basic', status: 'Expired' },
+            ].map((p, i) => (
+              <div key={i} className="card" style={{ padding: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', opacity: i === 0 ? 1 : 0.6 }}>
+                <div>
+                  <h4 style={{ fontSize: '14px', marginBottom: '4px' }}>{p.week}</h4>
+                  <p style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{p.date} • {p.plan}</p>
+                </div>
+                <span className={`badge ${p.status === 'Active' ? 'badge-approved' : 'badge-review'}`} style={{ fontSize: '10px' }}>{p.status}</span>
+              </div>
+            ))}
+          </div>
+          <button className="btn-primary" style={{ width: '100%', marginTop: '24px', background: 'rgba(255,255,255,0.02)', border: '1px solid var(--card-border)', color: 'white' }}>
+            <FileText size={18} /> View Terms & Conditions
+          </button>
+        </div>
       </div>
     </div>
-  )
-}
+  );
+};
+
+export default PolicyPage;

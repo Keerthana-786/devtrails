@@ -170,7 +170,7 @@ const QUESTION_PATTERNS = {
     patterns: [
       'risk', 'insurance', 'coverage', 'protection', 'policy', 'claim',
       'what happens if', 'am i covered', 'insurance coverage', 'risk coverage',
-      'disruption', 'emergency', 'accident', 'incident', 'problem', 'issue',
+      'disruption', 'emergency', 'delay', 'incident', 'problem', 'issue',
       'when do i get paid', 'payout trigger', 'when payout', 'payment trigger'
     ],
     response: (context) => {
@@ -295,7 +295,7 @@ const QUESTION_PATTERNS = {
     ],
     response: (context) => {
       const premium = context.weeklyPremium || 76.50;
-      return `💎 **Value Proposition:**\n• 💰 Weekly Premium: ₹${premium.toFixed(2)}\n• 🛡️ Unlimited disruption coverage\n• ⚡ Instant payouts (worth ₹1000s)\n• 📊 AI accuracy saves money\n• 🎯 Personalized pricing\n\nAverage user saves ₹500+ monthly vs traditional insurance!`;
+      return `💎 **Value Proposition:**\n• 💰 Weekly Premium: ₹${premium.toFixed(2)}\n• 🛡️ Unlimited disruption coverage\n• ⚡ Instant payouts (worth ₹1000s)\n• 📊 AI accuracy saves money\n• 🎯 Personalized pricing\n\nAverage user saves ₹120+ weekly vs traditional insurance!`;
     }
   },
 
