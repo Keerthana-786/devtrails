@@ -42,11 +42,11 @@ const Sidebar = () => {
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             fontSize: '18px', fontWeight: 'bold'
           }}>
-            {worker.name.charAt(0)}
+            {worker?.name?.charAt(0) || 'U'}
           </div>
           <div style={{ overflow: 'hidden' }}>
-            <p style={{ fontSize: '14px', fontWeight: '600', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>{worker.name}</p>
-            <p style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{worker.platform} Partner</p>
+            <p style={{ fontSize: '14px', fontWeight: '600', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>{worker?.name || 'User'}</p>
+            <p style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{worker?.platform || 'Delivery'} Partner</p>
           </div>
         </div>
       </div>

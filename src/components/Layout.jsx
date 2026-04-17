@@ -1,5 +1,6 @@
 import React from 'react';
 import { useLocation } from 'react-router-dom';
+import { Shield } from 'lucide-react';
 import Sidebar from './Sidebar';
 import DemoControls from './DemoControls';
 import ClaimJourneyModal from './ClaimJourneyModal';

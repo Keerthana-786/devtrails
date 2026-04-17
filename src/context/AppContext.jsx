@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { DEMO_CLAIMS_ARRAY } from './services/DEMO_DATA';
+import { DEMO_CLAIMS_ARRAY } from '../services/DEMO_DATA';
 
 const AppContext = createContext();
 
@@ -101,6 +101,18 @@ export const AppProvider = ({ children }) => {
     lastSync: new Date().toLocaleTimeString()
   });
 
+  // Notifications
+  const [notifications, setNotificationsState] = useState(() => getFromFolder('notifications', [
+    { id: 1, type: 'GREEN', message: 'Payment processed successfully', read: false, time: new Date() },
+    { id: 2, type: 'BLUE', message: 'Policy renewed for next week', read: false, time: new Date() }
+  ]));
+
+  const setNotifications = (data) => {
+    const updated = typeof data === 'function' ? data(notifications) : data;
+    setNotificationsState(updated);
+    saveToFolder('notifications', updated);
+  };
+
   const logout = () => {
     localStorage.removeItem('paynest_token');
     sessionStorage.removeItem('paynest_token');
@@ -119,6 +131,7 @@ export const AppProvider = ({ children }) => {
       activeClaimJourney, setActiveClaimJourney,
       startClaimJourney, triggerClaim,
       weatherData, setWeatherData,
+      notifications, setNotifications,
       logout
     }}>
       {children}

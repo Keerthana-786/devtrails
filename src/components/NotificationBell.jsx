@@ -3,10 +3,10 @@ import { Bell, CheckCircle, AlertTriangle, XCircle, Info, Timer } from 'lucide-r
 import { useApp } from '../context/AppContext';
 
 const NotificationBell = () => {
-  const { notifications, setNotifications } = useApp();
+  const { notifications = [], setNotifications } = useApp();
   const [isOpen, setIsOpen] = useState(false);
 
-  const unreadCount = notifications.filter(n => !n.read).length;
+  const unreadCount = notifications?.filter(n => !n.read)?.length || 0;
 
   const getIcon = (type) => {
     switch (type) {
