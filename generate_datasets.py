@@ -11,8 +11,7 @@ np.random.seed(42)
 Path("datasets").mkdir(exist_ok=True)
 
 CITIES = ["Mumbai", "Delhi", "Bangalore", "Chennai", "Hyderabad", "Kolkata", "Pune", "Ahmedabad"]
-ZONES = ["Andheri West", "Kurla", "Bandra West", "Dadar", "Thane", "Malad", "Borivali", "Mulund",
-         "Connaught Place", "Lajpat Nagar", "Rohini", "Dwarka", "Noida", "Gurgaon"]
+ZONES = ["Andheri West", "Kurla", "Bandra West", "Dadar", "Thane", "Malad", "Borivali", "Mulund","Connaught Place", "Lajpat Nagar", "Rohini", "Dwarka", "Noida", "Gurgaon"]
 
 # ── Dataset 1: Risk Prediction (8,000 rows, 9 features) ──────────────────────
 print("Generating risk_dataset.csv...")

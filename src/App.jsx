@@ -1,7 +1,8 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AppProvider, useApp } from './context/AppContext';
 import Layout from './components/Layout';
+import SplashScreen from './components/SplashScreen';
 
 // Pages
 import LoginPage from './pages/LoginPage';
@@ -95,6 +96,34 @@ function AppRoutes() {
 }
 
 function App() {
+  const [showSplash, setShowSplash] = useState(true);
+
+  useEffect(() => {
+    // Show splash screen on first visit (check sessionStorage)
+    const hasVisited = sessionStorage.getItem('paynest_visited');
+    if (hasVisited) {
+      setShowSplash(false);
+    } else {
+      // First visit - show splash for 4 seconds then hide
+      const timer = setTimeout(() => {
+        setShowSplash(false);
+        sessionStorage.setItem('paynest_visited', 'true');
+      }, 4000);
+      return () => clearTimeout(timer);
+    }
+  }, []);
+
+  if (showSplash) {
+    return (
+      <SplashScreen 
+        onComplete={() => {
+          setShowSplash(false);
+          sessionStorage.setItem('paynest_visited', 'true');
+        }} 
+      />
+    );
+  }
+
   return (
     <AppProvider>
       <Router>

@@ -67,17 +67,9 @@ const LoginPage = () => {
         <div style={{ position: 'absolute', bottom: '-10%', left: '-10%', width: '300px', height: '300px', background: '#6366F1', opacity: 0.1, filter: 'blur(100px)', borderRadius: '50%' }} />
         
         <div style={{ position: 'relative', zIndex: 1 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '48px' }}>
-            <div style={{ 
-              width: '56px', height: '56px', 
-              background: 'var(--primary)', 
-              borderRadius: '16px', 
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              boxShadow: '0 8px 32px rgba(108, 99, 255, 0.4)'
-            }}>
-              <Shield size={32} color="white" fill="white" />
-            </div>
-            <h1 style={{ fontSize: '42px', fontWeight: '900', letterSpacing: '-1.5px', fontFamily: "'Space Grotesk', sans-serif" }}>PayNest</h1>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '20px', marginBottom: '48px' }}>
+            <img src="/paynest2.png" alt="PayNest" style={{ width: '64px', height: '64px', objectFit: 'contain' }} />
+            <h1 style={{ fontSize: '48px', fontWeight: '900', letterSpacing: '-2px', fontFamily: "'Space Grotesk', sans-serif" }}>PayNest</h1>
           </div>
           
           <h2 style={{ fontSize: '48px', lineHeight: '1.1', fontWeight: '800', marginBottom: '24px', maxWidth: '600px', fontFamily: "'Space Grotesk', sans-serif" }}>

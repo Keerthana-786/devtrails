@@ -2,7 +2,7 @@ const config = {
   get IS_DEMO() {
     return sessionStorage.getItem('paynest_mode') === 'demo';
   },
-  API_URL: import.meta.env.VITE_API_URL || 'http://localhost:8000/api',
+  API_URL: import.meta.env.VITE_API_URL || '/api',
   
   TRIGGERS: {
     HEAVY_RAIN:   { threshold: 35, unit: 'mm/hr',  payout_rate: 0.60 },

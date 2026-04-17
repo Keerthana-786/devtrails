@@ -29,17 +29,8 @@ const Sidebar = () => {
       zIndex: 100
     }}>
       <div style={{ padding: '24px', display: 'flex', alignItems: 'center', gap: '12px' }}>
-        <div style={{ 
-          width: '32px', height: '32px', 
-          background: 'var(--primary)', 
-          borderRadius: '8px', 
-          display: 'flex', 
-          alignItems: 'center', 
-          justifyContent: 'center',
-          color: 'white',
-          fontWeight: 'bold'
-        }}>P</div>
-        <h1 style={{ fontSize: '20px', letterSpacing: '-0.5px' }}>PayNest</h1>
+        <img src="/paynest2.png" alt="PayNest" style={{ width: '40px', height: '40px', objectFit: 'contain' }} />
+        <h1 style={{ fontSize: '20px', letterSpacing: '-0.5px', fontWeight: '800' }}>PayNest</h1>
       </div>
 
       <div style={{ padding: '0 24px 24px 24px', borderBottom: '1px solid var(--card-border)' }}>

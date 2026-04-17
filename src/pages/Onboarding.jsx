@@ -113,7 +113,12 @@ const Onboarding = () => {
   };
 
   return (
-    <div style={{ minHeight: '100vh', background: 'var(--dark-bg)', display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '80px 24px' }}>
+    <div style={{ minHeight: '100vh', background: 'var(--dark-bg)', display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '60px 24px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '40px' }}>
+         <img src="/paynest2.png" alt="PayNest" style={{ width: '40px', height: '40px', objectFit: 'contain' }} />
+         <h1 style={{ fontSize: '24px', fontWeight: '800' }}>PayNest Onboarding</h1>
+      </div>
+      
       {/* Progress Bar */}
       <div style={{ maxWidth: '800px', width: '100%', marginBottom: '48px' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px', fontSize: '12px', fontWeight: 'bold', color: 'var(--text-muted)' }}>
