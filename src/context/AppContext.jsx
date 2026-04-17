@@ -93,6 +93,35 @@ export const AppProvider = ({ children }) => {
     }
   };
 
+  const completeClaim = (claimData) => {
+    const newClaim = {
+      id: claimData.id || `CLM_${Math.random().toString(36).substr(2, 9).toUpperCase()}`,
+      dateDay: 'Today',
+      dateTime: new Date().toLocaleTimeString(),
+      trigger: claimData.trigger || 'Manual Trigger',
+      amount: claimData.amount || 480,
+      status: claimData.status || 'SETTLED',
+      fraudScore: claimData.fraudScore || 0,
+      triggerType: claimData.triggerType || 'MANUAL'
+    };
+    
+    addClaim(newClaim);
+    setActiveClaimJourney(null);
+    
+    // Add Success Notification
+    const newNotification = {
+      id: Date.now(),
+      type: newClaim.status === 'SETTLED' ? 'GREEN' : 'RED',
+      title: newClaim.status === 'SETTLED' ? 'Payout Success' : 'Claim Blocked',
+      message: newClaim.status === 'SETTLED' 
+        ? `₹${newClaim.amount} sent to your UPI ID.` 
+        : 'Suspicious activity detected. Claim held for review.',
+      read: false,
+      time: 'Just now'
+    };
+    setNotifications(prev => [newNotification, ...prev]);
+  };
+
   // Environment Data (Mock Live)
   const [weatherData, setWeatherData] = useState({
     rainfall: 0,
@@ -124,7 +153,7 @@ export const AppProvider = ({ children }) => {
   return (
     <AppContext.Provider value={{
       worker, setWorker,
-      claims, setClaims, addClaim,
+      claims, setClaims, addClaim, completeClaim,
       isDemo, setIsDemo,
       isAdminAuth, setIsAdminAuth,
       isAuthenticated, setIsAuthenticated,

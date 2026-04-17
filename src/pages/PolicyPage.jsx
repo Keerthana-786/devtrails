@@ -1,11 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { useApp } from '../context/AppContext';
-import { Shield, CheckCircle, XCircle, CloudRain, Thermometer, Wind, AlertCircle, Ban, Download, RefreshCw, FileText } from 'lucide-react';
+import { Shield, CheckCircle, XCircle, CloudRain, Thermometer, Wind, AlertCircle, Ban, Download, RefreshCw, FileText, Settings } from 'lucide-react';
 import PolicyCertificateModal from '../components/PolicyCertificateModal';
+import PlanSwitcherModal from '../components/PlanSwitcherModal';
 
 const PolicyPage = () => {
   const { worker } = useApp();
   const [isCertModalOpen, setIsCertModalOpen] = useState(false);
+  const [isPlanModalOpen, setIsPlanModalOpen] = useState(false);
 
   useEffect(() => {
     document.title = 'PayNest — My Policy';
@@ -33,6 +35,12 @@ const PolicyPage = () => {
             style={{ background: 'rgba(255,255,255,0.05)', color: 'white', border: '1px solid var(--card-border)' }}
           >
             <Download size={18} /> View Certificate
+          </button>
+          <button 
+            onClick={() => setIsPlanModalOpen(true)}
+            className="btn-primary" 
+          >
+            <Settings size={18} /> Modify Coverage
           </button>
         </div>
       </div>
@@ -159,6 +167,7 @@ const PolicyPage = () => {
       </div>
 
       <PolicyCertificateModal isOpen={isCertModalOpen} onClose={() => setIsCertModalOpen(false)} />
+      <PlanSwitcherModal isOpen={isPlanModalOpen} onClose={() => setIsPlanModalOpen(false)} />
     </div>
   );
 };

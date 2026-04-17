@@ -3,8 +3,11 @@ import { useApp } from '../context/AppContext';
 import config from '../config';
 import { TrendingUp, Shield, Clock, Users, Flame, MapPin, Search, ChevronRight, CheckCircle, Smartphone, AlertCircle, Radio } from 'lucide-react';
 
+import PlanSwitcherModal from '../components/PlanSwitcherModal';
+
 const WorkerDashboard = () => {
   const { worker, setWorker, setClaims, claims } = useApp();
+  const [isPlanModalOpen, setIsPlanModalOpen] = useState(false);
   const [countdown, setCountdown] = useState(30);
   const [monitoringLogs, setMonitoringLogs] = useState([]);
   const [weather, setWeather] = useState({ rainfall: 0, temperature: 32, aqi: 85 });
@@ -171,7 +174,11 @@ const WorkerDashboard = () => {
                <h4 style={{ fontSize: '16px' }}>VPA: {worker.upiId || 'worker@upi'}</h4>
                <p style={{ fontSize: '11px', color: 'var(--success)', marginTop: '4px' }}>Instant Razorpay Payout Enabled</p>
             </div>
-            <button className="btn-primary" style={{ width: '100%', marginTop: '8px' }}>
+            <button 
+              onClick={() => setIsPlanModalOpen(true)}
+              className="btn-primary" 
+              style={{ width: '100%', marginTop: '8px' }}
+            >
               Modify Coverage
             </button>
           </div>
@@ -272,6 +279,7 @@ const WorkerDashboard = () => {
           )}
         </div>
       </div>
+      <PlanSwitcherModal isOpen={isPlanModalOpen} onClose={() => setIsPlanModalOpen(false)} />
     </div>
   );
 };

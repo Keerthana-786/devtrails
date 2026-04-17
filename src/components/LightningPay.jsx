@@ -116,12 +116,12 @@ const LightningPay = () => {
   };
 
   const handleFinish = () => {
-    const isFraud = activeClaimJourney.type === 'FRAUD';
+    const isFraud = activeClaimJourney.triggerType === 'FRAUD';
     completeClaim({
       ...txData,
       status: isFraud ? 'BLOCKED' : 'SETTLED',
       fraudScore: isFraud ? 85 : 0,
-      triggerType: activeClaimJourney.type
+      triggerType: activeClaimJourney.triggerType
     });
   };
 
@@ -418,7 +418,7 @@ const LightningPay = () => {
         </div>
       </motion.div>
 
-      <style jsx>{`
+      <style>{`
         ::-webkit-scrollbar {
           width: 0px;
           background: transparent;
