@@ -1,13 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
 import config from '../config';
-import { TrendingUp, Shield, Clock, Users, Flame, MapPin, Search, ChevronRight, CheckCircle, Smartphone, AlertCircle, Radio } from 'lucide-react';
+import { TrendingUp, Shield, Clock, Users, Flame, MapPin, Search, ChevronRight, CheckCircle, Smartphone, AlertCircle, Radio, Brain } from 'lucide-react';
 
 import PlanSwitcherModal from '../components/PlanSwitcherModal';
+import PolicyCertificateModal from '../components/PolicyCertificateModal';
+import { LiveTriggerMonitor } from '../components/LiveTriggerMonitor';
+import PremiumExplainabilityPanel from '../components/PremiumExplainabilityPanel';
 
 const WorkerDashboard = () => {
   const { worker, setWorker, setClaims, claims } = useApp();
   const [isPlanModalOpen, setIsPlanModalOpen] = useState(false);
+  const [isCertificateModalOpen, setIsCertificateModalOpen] = useState(false);
+  const [isExplainModalOpen, setIsExplainModalOpen] = useState(false);
   const [countdown, setCountdown] = useState(30);
   const [monitoringLogs, setMonitoringLogs] = useState([]);
   const [weather, setWeather] = useState({ rainfall: 0, temperature: 32, aqi: 85 });
@@ -52,6 +57,8 @@ const WorkerDashboard = () => {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
+      <LiveTriggerMonitor />
+
       {/* Top Row: Metrics */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '24px' }}>
         <div className="card" style={{ borderLeft: '4px solid var(--success)' }}>
@@ -79,6 +86,29 @@ const WorkerDashboard = () => {
           </div>
           <p style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>Weekly Income Insurance</p>
           <p style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '8px' }}>Premium: ₹{worker.weeklyPremium || 49}/week</p>
+          <button 
+            onClick={() => setIsExplainModalOpen(true)}
+            style={{ 
+              marginTop: '12px', background: 'none', border: 'none', color: 'var(--primary)', 
+              fontSize: '11px', fontWeight: 'bold', cursor: 'pointer', display: 'flex', 
+              alignItems: 'center', gap: '4px', padding: '0' 
+            }}
+          >
+            <Brain size={12} /> Why this premium?
+          </button>
+          <button 
+            onClick={() => setIsCertificateModalOpen(true)}
+            style={{ 
+              marginTop: '16px', width: '100%', background: 'rgba(255,255,255,0.05)', 
+              border: '1px solid rgba(255,255,255,0.1)', color: '#fff', 
+              padding: '8px', borderRadius: '8px', fontSize: '11px', fontWeight: 'bold',
+              cursor: 'pointer', transition: 'all 0.2s'
+            }}
+            onMouseOver={e => e.currentTarget.style.background = 'rgba(255,255,255,0.1)'}
+            onMouseOut={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
+          >
+            VIEW OFFICIAL CERTIFICATE
+          </button>
         </div>
 
         <div className="card" style={{ borderLeft: '4px solid #3B82F6' }}>
@@ -107,60 +137,8 @@ const WorkerDashboard = () => {
         </div>
       </div>
 
-      {/* Middle Row: Live Monitor and Quick Actions */}
-      <div style={{ display: 'grid', gridTemplateColumns: '3fr 2fr', gap: '24px' }}>
-        <div className="card">
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-            <h3 style={{ fontSize: '18px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-              Live Environment Monitor <span className="badge badge-live"><span className="pulse-dot" /> AUTO MODE ACTIVE</span>
-            </h3>
-            <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
-              Syncing in: <span style={{ color: 'var(--primary)', fontWeight: '700', fontFamily: 'monospace' }}>{countdown}s</span>
-            </div>
-          </div>
-          
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px', marginBottom: '32px' }}>
-            <div style={{ padding: '16px', background: 'rgba(255,255,255,0.03)', borderRadius: '12px', textAlign: 'center' }}>
-              <p style={{ fontSize: '10px', color: 'var(--text-muted)', marginBottom: '8px' }}>TEMPERATURE</p>
-              <p style={{ fontSize: '13px', fontWeight: '600' }}>{weather.temperature?.toFixed(1) || '32'}°C</p>
-            </div>
-            <div style={{ padding: '16px', background: 'rgba(255,255,255,0.03)', borderRadius: '12px', textAlign: 'center' }}>
-              <p style={{ fontSize: '10px', color: 'var(--text-muted)', marginBottom: '8px' }}>RAINFALL</p>
-              <p style={{ fontSize: '13px', fontWeight: '600' }}>{weather.rainfall?.toFixed(1) || '0'}mm/hr</p>
-            </div>
-            <div style={{ padding: '16px', background: 'rgba(255,255,255,0.03)', borderRadius: '12px', textAlign: 'center' }}>
-              <p style={{ fontSize: '10px', color: 'var(--text-muted)', marginBottom: '8px' }}>AQI LEVEL</p>
-              <p style={{ fontSize: '13px', fontWeight: '600', color: weather.aqi > 300 ? 'var(--danger)' : 'var(--success)' }}>{weather.aqi || 84}</p>
-            </div>
-            <div style={{ padding: '16px', background: 'rgba(255,255,255,0.03)', borderRadius: '12px', textAlign: 'center' }}>
-              <p style={{ fontSize: '10px', color: 'var(--text-muted)', marginBottom: '8px' }}>LOCATION</p>
-              <p style={{ fontSize: '13px', fontWeight: '600' }}>{worker.zone || 'Mumbai'}</p>
-            </div>
-          </div>
-
-          <div style={{ padding: '12px 20px', background: weather.rainfall > 35 || weather.temperature > 43 ? 'rgba(239, 68, 68, 0.05)' : 'rgba(16, 185, 129, 0.05)', borderRadius: '12px', border: '1px solid rgba(16, 185, 129, 0.1)', marginBottom: '24px', display: 'flex', alignItems: 'center', gap: '12px' }}>
-            {weather.rainfall > 35 || weather.temperature > 43 ? <AlertCircle size={18} color="var(--danger)" /> : <CheckCircle size={18} color="var(--success)" />}
-            <span style={{ fontSize: '14px', color: weather.rainfall > 35 || weather.temperature > 43 ? 'var(--danger)' : 'var(--success)', fontWeight: '600' }}>
-              {weather.rainfall > 35 || weather.temperature > 43 ? 'DISRUPTION DETECTED - Processing Auto Claim' : 'Stable conditions – Monitoring for parametric triggers...'}
-            </span>
-          </div>
-
-          <div>
-            <p style={{ fontSize: '12px', color: 'var(--text-muted)', fontWeight: '700', marginBottom: '12px', letterSpacing: '1px' }}>SYSTEM EVENT LOG (AUTO-MODE)</p>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '150px', overflowY: 'auto' }}>
-              {monitoringLogs.map((log, i) => (
-                <div key={i} style={{ display: 'flex', gap: '16px', fontSize: '12px', fontFamily: 'monospace' }}>
-                  <span style={{ color: 'var(--text-muted)' }}>[{log.time}]</span>
-                  <span style={{ color: log.message.includes('✅') || log.message.includes('sent') ? 'var(--success)' : log.message.includes('🚨') ? 'var(--danger)' : 'var(--text-secondary)' }}>
-                     {log.message}
-                  </span>
-                </div>
-              ))}
-              {monitoringLogs.length === 0 && <p style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Waiting for first scan...</p>}
-            </div>
-          </div>
-        </div>
-
+      {/* Settings Row */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '24px' }}>
         <div className="card">
           <h3 style={{ fontSize: '18px', marginBottom: '24px' }}>Protection Settings</h3>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
@@ -280,6 +258,8 @@ const WorkerDashboard = () => {
         </div>
       </div>
       <PlanSwitcherModal isOpen={isPlanModalOpen} onClose={() => setIsPlanModalOpen(false)} />
+      <PolicyCertificateModal isOpen={isCertificateModalOpen} onClose={() => setIsCertificateModalOpen(false)} />
+      <PremiumExplainabilityPanel isOpen={isExplainModalOpen} onClose={() => setIsExplainModalOpen(false)} worker={worker} />
     </div>
   );
 };

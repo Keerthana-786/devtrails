@@ -1,16 +1,37 @@
 // Dashboard.jsx — Home: risk, weather, BTS, chart, payouts
 
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useApp } from '../context/AppContext.jsx'
 import { Card, RiskBadge, WeatherMetric, SectionHeader, PayoutRow, Divider, EmptyState, ProgressBar, Btn, Badge } from '../components/UI.jsx'
 import PayoutEngine from '../components/PayoutEngine.jsx'
 import AIExplanation from '../components/AIExplanation.jsx'
+import { LiveTriggerMonitor } from '../components/LiveTriggerMonitor.jsx'
 import { PLANS } from '../utils/constants.js'
 
 export default function Dashboard() {
   const { user, weather, risk, payouts, t } = useApp()
   const [lastPayout, setLastPayout] = useState(null)
+  const [showFraudAlert, setShowFraudAlert] = useState(false)
   const plan = PLANS[user?.plan || 'basic']
+
+  // Auto-trigger fraud alert after 30 seconds
+  useEffect(() => {
+    const triggerTimer = setTimeout(() => {
+      setShowFraudAlert(true)
+    }, 30000)
+
+    return () => clearTimeout(triggerTimer)
+  }, [])
+
+  // Auto-hide fraud alert after 8 seconds
+  useEffect(() => {
+    if (showFraudAlert) {
+      const hideTimer = setTimeout(() => {
+        setShowFraudAlert(false)
+      }, 8000)
+      return () => clearTimeout(hideTimer)
+    }
+  }, [showFraudAlert])
 
   const hour = new Date().getHours()
   const greeting = hour < 12 ? t.goodMorning : hour < 17 ? t.hello : 'Good evening'
@@ -30,6 +51,43 @@ export default function Dashboard() {
 
   return (
     <div style={{ background: '#F8F8F8', minHeight: '100%', paddingBottom: '20px' }}>
+      <style>{`
+        @keyframes shake {
+          0%, 100% { transform: translateX(0); }
+          10%, 30%, 50%, 70%, 90% { transform: translateX(-3px); }
+          20%, 40%, 60%, 80% { transform: translateX(3px); }
+        }
+        .fraud-alert-shake {
+          animation: shake 0.5s ease-in-out;
+        }
+        @keyframes slideDown {
+          from { opacity: 0; transform: translateY(-10px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        .fraud-alert-enter {
+          animation: slideDown 0.3s ease-out;
+        }
+      `}</style>
+
+      {/* Fraud Alert Banner */}
+      {showFraudAlert && (
+        <div className="fraud-alert-enter fraud-alert-shake" style={{
+          background: '#DC2626',
+          color: '#fff',
+          padding: '14px 16px',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '12px',
+          borderBottom: '2px solid #991B1B',
+          fontWeight: '600',
+          fontSize: '13px',
+          justifyContent: 'center',
+          position: 'relative',
+          zIndex: 100
+        }}>
+          ⚠️ Suspicious activity detected. 1 claim blocked due to fraud risk.
+        </div>
+      )}
       {/* Header */}
       <div style={{ background: '#E23744', padding: '20px 16px 28px' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px' }}>
@@ -59,6 +117,9 @@ export default function Dashboard() {
       </div>
 
       <div style={{ padding: '0 16px', transform: 'translateY(-12px)', display: 'flex', flexDirection: 'column', gap: '14px' }}>
+
+        {/* Live Trigger Monitor - Placed at top */}
+        <LiveTriggerMonitor />
 
         {/* Live Payout Engine */}
         <PayoutEngine onPaid={payout => setLastPayout(payout)} />

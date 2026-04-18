@@ -1,86 +1,104 @@
 /**
  * REAL API CALLS — Only used when config.IS_DEMO = false
- * Never call these in demo mode
  */
 
 import config from './config.js';
 
 const BASE_URL = config.API_URL;
 
-// Real authentication APIs
+const getHeaders = (token) => ({
+  'Content-Type': 'application/json',
+  ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+});
+
 export const realAuthAPI = {
+  // Initiates OTP for phone
   sendOTP: async (phone) => {
-    const response = await fetch(`${BASE_URL}/auth/send-otp`, {
+    const response = await fetch(`${BASE_URL}/auth/otp`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: getHeaders(),
       body: JSON.stringify({ phone })
     });
     return response.json();
   },
 
+  // Verifies OTP and returns token + user
   verifyOTP: async (phone, otp) => {
-    const response = await fetch(`${BASE_URL}/auth/verify-otp`, {
+    const response = await fetch(`${BASE_URL}/auth/verify`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: getHeaders(),
       body: JSON.stringify({ phone, otp })
     });
     return response.json();
-  }
-};
+  },
 
-// Real dashboard APIs
-export const realDashboardAPI = {
-  getDashboardData: async (workerId, token) => {
-    const response = await fetch(`${BASE_URL}/workers/${workerId}/dashboard`, {
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json'
-      }
+  // Completes worker profile
+  onboard: async (onboardingData, token) => {
+    const response = await fetch(`${BASE_URL}/auth/onboard`, {
+      method: 'POST',
+      headers: getHeaders(token),
+      body: JSON.stringify(onboardingData)
     });
-    if (!response.ok) throw new Error('Failed to fetch dashboard data');
     return response.json();
   }
 };
 
-// Real claims APIs
-export const realClaimsAPI = {
-  getClaimsHistory: async (workerId, token) => {
-    const response = await fetch(`${BASE_URL}/claims/${workerId}`, {
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json'
-      }
+export const realDashboardAPI = {
+  // Combined call for user data, weather, stats and logs
+  getDashboard: async (token) => {
+    const response = await fetch(`${BASE_URL}/dashboard`, {
+      headers: getHeaders(token)
     });
-    if (!response.ok) throw new Error('Failed to fetch claims history');
+    if (!response.ok) throw new Error('Failed to fetch dashboard');
     return response.json();
   },
 
-  triggerManualClaim: async (workerId, triggerType, token) => {
-    const response = await fetch(`${BASE_URL}/claims/manual-trigger`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({ workerId, triggerType })
+  getAdminMetrics: async (token) => {
+    const response = await fetch(`${BASE_URL}/admin/metrics`, {
+      headers: getHeaders(token)
     });
-    if (!response.ok) throw new Error('Failed to trigger claim');
     return response.json();
   }
 };
 
-// Real policy APIs
-export const realPolicyAPI = {
-  purchasePolicy: async (workerId, tier, token) => {
-    const response = await fetch(`${BASE_URL}/policies/purchase`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({ workerId, tier })
+export const realClaimsAPI = {
+  getPayouts: async (token) => {
+    const response = await fetch(`${BASE_URL}/payouts`, {
+      headers: getHeaders(token)
     });
-    if (!response.ok) throw new Error('Failed to purchase policy');
+    return response.json();
+  },
+
+  createPayout: async (payoutData, token) => {
+    const response = await fetch(`${BASE_URL}/payouts/create`, {
+      method: 'POST',
+      headers: getHeaders(token),
+      body: JSON.stringify({ payout: payoutData })
+    });
+    return response.json();
+  }
+};
+
+export const realAIAPI = {
+  chat: async (message, context, token) => {
+    const response = await fetch(`${BASE_URL}/chatbot`, {
+      method: 'POST',
+      headers: getHeaders(token),
+      body: JSON.stringify({ message, context })
+    });
+    return response.json();
+  },
+
+  ocr: async (base64Data, filename, token) => {
+    const response = await fetch(`${BASE_URL}/aadhaar-ocr`, {
+      method: 'POST',
+      headers: getHeaders(token),
+      body: JSON.stringify({ 
+        base64Data, 
+        fileName: filename, 
+        mimeType: 'image/jpeg' 
+      })
+    });
     return response.json();
   }
 };

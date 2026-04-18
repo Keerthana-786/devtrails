@@ -1,12 +1,14 @@
 import React, { useState } from 'react'
 import { useApp } from '../context/AppContext.jsx'
 import { Card, Badge, Btn } from '../components/UI.jsx'
+import TermsModal from '../components/TermsModal'
 
 const API_BASE = import.meta.env.VITE_API_URL || (import.meta.env.MODE === 'development' ? 'http://localhost:8000' : (typeof window !== 'undefined' ? window.location.origin : 'https://devtrails.onrender.com'));
 
 export default function RegistrationPage({ onBack }) {
   const { setUser } = useApp()
   const [step, setStep] = useState(1)
+  const [isTermsOpen, setIsTermsOpen] = useState(false)
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -396,7 +398,7 @@ export default function RegistrationPage({ onBack }) {
                   style={{ width: '16px', height: '16px' }}
                 />
                 <span style={{ fontSize: '14px', color: '#1C1C1C' }}>
-                  I accept the Terms & Conditions and Privacy Policy
+                  I accept the <span onClick={() => setIsTermsOpen(true)} style={{ color: '#1A73E8', cursor: 'pointer', textDecoration: 'underline' }}>Terms & Conditions</span> and Privacy Policy
                 </span>
               </label>
             </div>
@@ -518,6 +520,7 @@ export default function RegistrationPage({ onBack }) {
           </Btn>
         )}
       </div>
+      <TermsModal isOpen={isTermsOpen} onClose={() => setIsTermsOpen(false)} />
     </div>
   )
 }

@@ -7,6 +7,9 @@ import {
 } from 'recharts';
 import { Users, TrendingUp, AlertTriangle, Shield, Wallet, Activity, ArrowUpRight, ArrowDownRight, CheckCircle, HelpCircle, Info } from 'lucide-react';
 
+import { realDashboardAPI } from '../REAL_API';
+import ImpactAndScale from '../components/ImpactAndScale';
+
 const AdminDashboard = () => {
   const { isAdminAuth } = useApp();
   const [loading, setLoading] = useState(true);
@@ -46,10 +49,8 @@ const AdminDashboard = () => {
     document.title = 'PayNest — Admin Control';
     const fetchMetrics = async () => {
       try {
-        const res = await fetch(`${config.API_URL}/admin/metrics`, {
-          headers: { 'Authorization': `Bearer ${sessionStorage.getItem('paynest_token')}` }
-        });
-        const data = await res.json();
+        const token = sessionStorage.getItem('paynest_token') || localStorage.getItem('paynest_token');
+        const data = await realDashboardAPI.getAdminMetrics(token);
         setMetrics(data);
         setLoading(false);
       } catch (err) {
@@ -262,34 +263,8 @@ const AdminDashboard = () => {
          </div>
       </div>
 
-      {/* Social Impact Summary */}
-      <div className="card" style={{ background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.05) 0%, rgba(108, 99, 255, 0.05) 100%)' }}>
-         <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
-            <Activity size={24} color="var(--primary)" />
-            <h3 style={{ fontSize: '20px' }}>Social Impact Dashboard</h3>
-         </div>
-         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '20px' }}>
-            <div style={{ textAlign: 'center' }}>
-               <h4 style={{ fontSize: '28px', color: 'var(--primary)' }}>10,000+</h4>
-               <p style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Workers Protected</p>
-            </div>
-            <div style={{ textAlign: 'center' }}>
-               <h4 style={{ fontSize: '28px', color: 'var(--success)' }}>₹94,200</h4>
-               <p style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Daily Income Saved</p>
-            </div>
-            <div style={{ textAlign: 'center' }}>
-               <h4 style={{ fontSize: '28px', color: '#3B82F6' }}>15,000</h4>
-               <p style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Families Impacted</p>
-            </div>
-            <div style={{ textAlign: 'center' }}>
-               <h4 style={{ fontSize: '28px', color: 'var(--warning)' }}>28%</h4>
-               <p style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Stability Increase</p>
-            </div>
-         </div>
-         <p style={{ textAlign: 'center', marginTop: '24px', fontStyle: 'italic', color: 'var(--text-secondary)', fontSize: '14px' }}>
-            “We protect livelihoods, not devices or health. PayNest is the safety net for the backbone of India's gig economy.”
-         </p>
-      </div>
+      {/* Impact and Scale Section */}
+      <ImpactAndScale />
 
       {/* Break-even Row */}
       <div className="card">

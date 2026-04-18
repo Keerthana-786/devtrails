@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { DEMO_CLAIMS_ARRAY } from '../services/DEMO_DATA';
+import { realDashboardAPI, realClaimsAPI } from '../REAL_API';
 
 const AppContext = createContext();
 
@@ -59,6 +60,52 @@ export const AppProvider = ({ children }) => {
     localStorage.setItem('paynest_is_admin', val);
   };
 
+  // Sync with Backend
+  useEffect(() => {
+    const syncData = async () => {
+      const token = sessionStorage.getItem('paynest_token') || localStorage.getItem('paynest_token');
+      if (isAuthenticated && !isDemo && token) {
+        try {
+          const dashData = await realDashboardAPI.getDashboard(token);
+          if (dashData.user) {
+            setWorkerState(dashData.user);
+            saveToFolder('worker', dashData.user);
+          }
+          if (dashData.payouts) {
+            // Transform payouts to claims format if needed
+            const transformedClaims = dashData.payouts.map(p => ({
+              id: p.id,
+              dateDay: new Date(p.createdAt).toLocaleDateString(),
+              dateTime: new Date(p.createdAt).toLocaleTimeString(),
+              trigger: p.trigger || 'Manual',
+              amount: p.amount,
+              status: p.status,
+              fraudScore: p.fraudScore || 0,
+              triggerType: p.triggerType || 'MANUAL'
+            }));
+            setClaimsState(transformedClaims);
+            saveToFolder('claims', transformedClaims);
+          }
+          if (dashData.weather) {
+            setWeatherData({
+              rainfall: dashData.weather.rainfall,
+              temp: dashData.weather.temperature,
+              aqi: dashData.weather.aqi,
+              lastSync: new Date().toLocaleTimeString()
+            });
+          }
+        } catch (err) {
+          console.error("Backend Sync Error:", err);
+        }
+      }
+    };
+
+    syncData();
+    // Poll every 60s if not in demo
+    const interval = !isDemo ? setInterval(syncData, 60000) : null;
+    return () => clearInterval(interval);
+  }, [isAuthenticated, isDemo]);
+
   // Claim Engine
   const startClaimJourney = (data) => {
     setActiveClaimJourney(data);
@@ -93,7 +140,9 @@ export const AppProvider = ({ children }) => {
     }
   };
 
-  const completeClaim = (claimData) => {
+  const completeClaim = async (claimData) => {
+    const token = sessionStorage.getItem('paynest_token') || localStorage.getItem('paynest_token');
+    
     const newClaim = {
       id: claimData.id || `CLM_${Math.random().toString(36).substr(2, 9).toUpperCase()}`,
       dateDay: 'Today',
@@ -102,8 +151,25 @@ export const AppProvider = ({ children }) => {
       amount: claimData.amount || 480,
       status: claimData.status || 'SETTLED',
       fraudScore: claimData.fraudScore || 0,
-      triggerType: claimData.triggerType || 'MANUAL'
+      triggerType: claimData.triggerType || 'MANUAL',
+      createdAt: new Date().toISOString()
     };
+
+    if (!isDemo && token) {
+      try {
+        const response = await realClaimsAPI.createPayout(newClaim, token);
+        if (response.success) {
+          if (response.user) setWorkerState(response.user);
+          // Backend might have changed status due to fraud check
+          if (response.payout) {
+            newClaim.status = response.payout.status;
+            newClaim.id = response.payout.id;
+          }
+        }
+      } catch (err) {
+        console.error("Failed to save claim to backend:", err);
+      }
+    }
     
     addClaim(newClaim);
     setActiveClaimJourney(null);
@@ -111,11 +177,13 @@ export const AppProvider = ({ children }) => {
     // Add Success Notification
     const newNotification = {
       id: Date.now(),
-      type: newClaim.status === 'SETTLED' ? 'GREEN' : 'RED',
-      title: newClaim.status === 'SETTLED' ? 'Payout Success' : 'Claim Blocked',
+      type: newClaim.status === 'SETTLED' ? 'GREEN' : (newClaim.status === 'REJECTED' ? 'RED' : 'BLUE'),
+      title: newClaim.status === 'SETTLED' ? 'Payout Success' : (newClaim.status === 'REJECTED' ? 'Claim Blocked' : 'Claim Under Review'),
       message: newClaim.status === 'SETTLED' 
         ? `₹${newClaim.amount} sent to your UPI ID.` 
-        : 'Suspicious activity detected. Claim held for review.',
+        : newClaim.status === 'REJECTED' 
+          ? 'Suspicious activity detected. Claim held for review.'
+          : 'Claim submitted and pending approval.',
       read: false,
       time: 'Just now'
     };
@@ -150,9 +218,13 @@ export const AppProvider = ({ children }) => {
     window.location.href = '/login';
   };
 
+  const token = sessionStorage.getItem('paynest_token') || localStorage.getItem('paynest_token');
+
   return (
     <AppContext.Provider value={{
-      worker, setWorker,
+      worker, setWorker, updateUser: setWorker,
+      token,
+      ...worker, // Flatten worker fields for easy access
       claims, setClaims, addClaim, completeClaim,
       isDemo, setIsDemo,
       isAdminAuth, setIsAdminAuth,

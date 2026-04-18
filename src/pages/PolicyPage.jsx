@@ -3,11 +3,37 @@ import { useApp } from '../context/AppContext';
 import { Shield, CheckCircle, XCircle, CloudRain, Thermometer, Wind, AlertCircle, Ban, Download, RefreshCw, FileText, Settings } from 'lucide-react';
 import PolicyCertificateModal from '../components/PolicyCertificateModal';
 import PlanSwitcherModal from '../components/PlanSwitcherModal';
+import TermsModal from '../components/TermsModal';
 
 const PolicyPage = () => {
   const { worker } = useApp();
   const [isCertModalOpen, setIsCertModalOpen] = useState(false);
   const [isPlanModalOpen, setIsPlanModalOpen] = useState(false);
+  const [isTermsOpen, setIsTermsOpen] = useState(false);
+  
+  // Load toggle states from localStorage
+  const [autoClaimsEnabled, setAutoClaimsEnabled] = useState(() => {
+    const saved = localStorage.getItem('autoClaimsEnabled');
+    return saved !== null ? JSON.parse(saved) : true;
+  });
+  
+  const [fraudProtectionEnabled, setFraudProtectionEnabled] = useState(() => {
+    const saved = localStorage.getItem('fraudProtectionEnabled');
+    return saved !== null ? JSON.parse(saved) : true;
+  });
+
+  // Persist toggle states to localStorage
+  const handleAutoClaimsToggle = () => {
+    const newState = !autoClaimsEnabled;
+    setAutoClaimsEnabled(newState);
+    localStorage.setItem('autoClaimsEnabled', JSON.stringify(newState));
+  };
+
+  const handleFraudProtectionToggle = () => {
+    const newState = !fraudProtectionEnabled;
+    setFraudProtectionEnabled(newState);
+    localStorage.setItem('fraudProtectionEnabled', JSON.stringify(newState));
+  };
 
   useEffect(() => {
     document.title = 'PayNest — My Policy';
@@ -111,6 +137,122 @@ const PolicyPage = () => {
         </div>
       </div>
 
+      {/* Protection Settings with Toggles */}
+      <div className="card" style={{ padding: '24px', background: 'rgba(108, 99, 255, 0.05)', border: '1px solid var(--card-border)' }}>
+        <h3 style={{ fontSize: '20px', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <Settings size={20} /> Protection Settings
+        </h3>
+        
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          {/* Auto Claims Toggle */}
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            padding: '16px',
+            background: 'var(--card-bg)',
+            borderRadius: '12px',
+            border: '1px solid var(--card-border)'
+          }}>
+            <div>
+              <h4 style={{ fontSize: '14px', fontWeight: '700', marginBottom: '4px' }}>Auto Claims</h4>
+              <p style={{ fontSize: '12px', color: 'var(--text-muted)' }}>AI triggers claims automatically when disruptions occur</p>
+            </div>
+            <div
+              onClick={handleAutoClaimsToggle}
+              style={{
+                width: '50px',
+                height: '28px',
+                borderRadius: '14px',
+                background: autoClaimsEnabled ? 'var(--success)' : '#555',
+                cursor: 'pointer',
+                position: 'relative',
+                transition: 'all 0.3s ease',
+                display: 'flex',
+                alignItems: 'center',
+                padding: '2px'
+              }}
+            >
+              <div
+                style={{
+                  width: '24px',
+                  height: '24px',
+                  borderRadius: '50%',
+                  background: 'white',
+                  position: 'absolute',
+                  left: autoClaimsEnabled ? '24px' : '2px',
+                  transition: 'left 0.3s ease',
+                  boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
+                }}
+              />
+            </div>
+          </div>
+
+          {/* Fraud Protection Toggle */}
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            padding: '16px',
+            background: 'var(--card-bg)',
+            borderRadius: '12px',
+            border: '1px solid var(--card-border)'
+          }}>
+            <div>
+              <h4 style={{ fontSize: '14px', fontWeight: '700', marginBottom: '4px' }}>Fraud Protection</h4>
+              <p style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Real-time ML-based fraud detection and claim verification</p>
+            </div>
+            <div
+              onClick={handleFraudProtectionToggle}
+              style={{
+                width: '50px',
+                height: '28px',
+                borderRadius: '14px',
+                background: fraudProtectionEnabled ? 'var(--success)' : '#555',
+                cursor: 'pointer',
+                position: 'relative',
+                transition: 'all 0.3s ease',
+                display: 'flex',
+                alignItems: 'center',
+                padding: '2px'
+              }}
+            >
+              <div
+                style={{
+                  width: '24px',
+                  height: '24px',
+                  borderRadius: '50%',
+                  background: 'white',
+                  position: 'absolute',
+                  left: fraudProtectionEnabled ? '24px' : '2px',
+                  transition: 'left 0.3s ease',
+                  boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
+                }}
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Warning Banner */}
+        {(!autoClaimsEnabled || !fraudProtectionEnabled) && (
+          <div style={{
+            marginTop: '16px',
+            padding: '12px 16px',
+            background: 'rgba(239, 68, 68, 0.1)',
+            borderLeft: '4px solid var(--danger)',
+            borderRadius: '8px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '12px',
+            fontSize: '13px',
+            color: 'var(--danger)'
+          }}>
+            <AlertCircle size={18} style={{ flexShrink: 0 }} />
+            <span><strong>⚠️ Protection disabled</strong> — claims may require manual review</span>
+          </div>
+        )}
+      </div>
+
       <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '24px' }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
           <h3 style={{ fontSize: '20px' }}>What You're Protected Against</h3>
@@ -143,7 +285,7 @@ const PolicyPage = () => {
         </div>
 
         <div>
-          <h3 style={{ fontSize: '20px', marginBottom: '24px' }}>Policy History</h3>
+          <h3 style={{ fontSize: '20px', marginBottom: '24px', display: 'flex', alignItems: 'center', gap: '8px' }}><FileText size={20} /> Policy History</h3>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
             {[
               { week: 'Week 4 (Current)', date: '11 - 18 Apr', plan: 'Standard', status: 'Active' },
@@ -160,7 +302,11 @@ const PolicyPage = () => {
               </div>
             ))}
           </div>
-          <button className="btn-primary" style={{ width: '100%', marginTop: '24px', background: 'rgba(255,255,255,0.02)', border: '1px solid var(--card-border)', color: 'white' }}>
+          <button 
+            onClick={() => setIsTermsOpen(true)}
+            className="btn-primary" 
+            style={{ width: '100%', marginTop: '24px', background: 'rgba(255,255,255,0.02)', border: '1px solid var(--card-border)', color: 'white' }}
+          >
             <FileText size={18} /> View Terms & Conditions
           </button>
         </div>
@@ -168,6 +314,7 @@ const PolicyPage = () => {
 
       <PolicyCertificateModal isOpen={isCertModalOpen} onClose={() => setIsCertModalOpen(false)} />
       <PlanSwitcherModal isOpen={isPlanModalOpen} onClose={() => setIsPlanModalOpen(false)} />
+      <TermsModal isOpen={isTermsOpen} onClose={() => setIsTermsOpen(false)} />
     </div>
   );
 };

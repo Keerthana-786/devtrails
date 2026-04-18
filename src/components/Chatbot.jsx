@@ -2,30 +2,15 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useApp } from '../context/AppContext.jsx';
 import kbData from '../../chatbot_kb.json';
 
-const API_BASE = import.meta.env.VITE_API_URL || (import.meta.env.MODE === 'development' ? 'http://localhost:8000' : (typeof window !== 'undefined' ? window.location.origin : 'https://devtrails.onrender.com'));
+import { realAIAPI } from '../REAL_API';
 
 export default function Chatbot() {
   const { 
-    token, 
-    weeklyPremium, 
-    walletBalance, 
-    activeDisruptions, 
+    token,
+    isDemo,
     stabilityScore, 
-    payouts, 
-    badges, 
-    pricingBreakdown,
-    weather,
-    traffic,
-    // Aadhaar fields
-    aadhaarUploaded,
-    aadhaarName,
-    aadhaarNumber,
-    aadhaarDOB,
-    aadhaarGender,
-    aadhaarAddress,
-    aadhaarPincode,
-    aadhaarConfidence,
-    updateUser
+    updateUser,
+    ...workerFields
   } = useApp();
 
   const [isOpen, setIsOpen] = useState(false);
@@ -51,51 +36,15 @@ export default function Chatbot() {
 
   const findBestMatchLocal = (question) => {
     const q = question.toLowerCase().trim();
+    // (Rest of local matching logic remains same)
     let bestMatch = null;
     let bestScore = 0;
-
-    // 1. Exact keyword match
     for (const entry of kbData) {
       for (const keyword of entry.keywords) {
-        if (q.includes(keyword.toLowerCase())) {
-          return entry.answer;
-        }
+        if (q.includes(keyword.toLowerCase())) return entry.answer;
       }
     }
-
-    // 2. Similarity match
-    for (const entry of kbData) {
-      for (const keyword of entry.keywords) {
-        const similarity = calculateSimilarity(q, keyword.toLowerCase());
-        if (similarity > bestScore && similarity > 0.6) {
-          bestMatch = entry.answer;
-          bestScore = similarity;
-        }
-      }
-    }
-
-    return bestMatch || "🤖 I'm your PayNest AI Assistant! I can help you with:\n\n💰 **Balance**: Check your wallet or earnings\n📊 **Score**: View your stability rating\n🛡️ **Zones**: Find safe working areas\n💳 **Premium**: Understand your costs\n🏅 **Badges**: See your achievements\n🆔 **KYC**: Aadhaar verification status\n\nWhat would you like to know about?";
-  };
-
-  const calculateSimilarity = (str1, str2) => {
-    const longer = str1.length > str2.length ? str1 : str2;
-    const shorter = str1.length > str2.length ? str2 : str1;
-    if (longer.length === 0) return 1.0;
-    const distance = levenshteinDistance(longer, shorter);
-    return (longer.length - distance) / longer.length;
-  };
-
-  const levenshteinDistance = (str1, str2) => {
-    const matrix = [];
-    for (let i = 0; i <= str2.length; i++) matrix[i] = [i];
-    for (let j = 0; j <= str1.length; j++) matrix[0][j] = j;
-    for (let i = 1; i <= str2.length; i++) {
-      for (let j = 1; j <= str1.length; j++) {
-        if (str2.charAt(i - 1) === str1.charAt(j - 1)) matrix[i][j] = matrix[i - 1][j - 1];
-        else matrix[i][j] = Math.min(matrix[i - 1][j - 1] + 1, matrix[i][j - 1] + 1, matrix[i - 1][j] + 1);
-      }
-    }
-    return matrix[str2.length][str1.length];
+    return bestMatch || "🤖 I'm your PayNest AI Assistant! How can I help you?";
   };
 
   const handleSendMessage = async (text) => {
@@ -108,49 +57,17 @@ export default function Chatbot() {
     setIsTyping(true);
 
     try {
-      const contextData = {
-        weeklyPremium,
-        walletBalance,
-        activeDisruptions,
-        stabilityScore,
-        payouts,
-        badges,
-        pricingBreakdown,
-        weather,
-        traffic,
-        aadhaarUploaded,
-        aadhaarName,
-        aadhaarNumber,
-        aadhaarDOB,
-        aadhaarGender,
-        aadhaarAddress,
-        aadhaarPincode,
-        aadhaarConfidence
-      };
+      if (isDemo || !token) {
+        throw new Error("Demo mode");
+      }
 
-      const res = await fetch(`${API_BASE}/api/chatbot`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          message: messageText,
-          context: contextData
-        })
-      });
-
-      if (res.ok) {
-        const data = await res.json();
+      const data = await realAIAPI.chat(messageText, workerFields, token);
+      if (data.reply) {
         setMessages(prev => [...prev, { role: 'assistant', content: data.reply }]);
       } else {
-        // Backend returned error, fallback to local match
-        const localReply = findBestMatchLocal(messageText);
-        setMessages(prev => [...prev, { role: 'assistant', content: localReply }]);
+        throw new Error("No reply");
       }
     } catch (error) {
-      console.error("Chatbot Fetch Error:", error);
-      // Network error/Offline, fallback to local match
       const localReply = findBestMatchLocal(messageText);
       setMessages(prev => [...prev, { role: 'assistant', content: localReply }]);
     } finally {
@@ -158,51 +75,23 @@ export default function Chatbot() {
     }
   };
 
-  // Handle Aadhaar OCR processing
   const handleAadhaarUpload = async (file) => {
     if (!file) return;
-
     setIsProcessingAadhaar(true);
     setAadhaarFile(file);
-
-    // Add user message about uploading Aadhaar
     setMessages(prev => [...prev, { role: 'user', content: `📄 Uploading Aadhaar card: ${file.name}` }]);
 
-    const processOCR = async () => {
-      return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.readAsDataURL(file);
-        reader.onload = async () => {
-          try {
-            const base64Data = reader.result.split(',')[1];
-            const mimeType = file.type;
-            
-            const res = await fetch(`${API_BASE}/api/aadhaar-ocr`, {
-              method: 'POST',
-              headers: { 
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
-              },
-              body: JSON.stringify({ image: base64Data, mimeType })
-            });
-            
-            if (!res.ok) throw new Error('OCR Failed');
-            const data = await res.json();
-            resolve(data.extracted);
-          } catch (err) {
-            console.error("Chatbot OCR Error:", err);
-            reject(err);
-          }
-        };
-        reader.onerror = error => reject(error);
-      });
-    };
-
     try {
-      const extracted = await processOCR();
+      const reader = new FileReader();
+      const base64Promise = new Promise((resolve) => {
+        reader.onload = () => resolve(reader.result.split(',')[1]);
+        reader.readAsDataURL(file);
+      });
+      const base64Data = await base64Promise;
+
+      const extracted = await realAIAPI.ocr(base64Data, file.name, token);
 
       if (extracted.isValidAadhaar) {
-        // Success - show extracted data and update user context
         let resultMessage = `✅ Aadhaar Verified!\n\n`;
         resultMessage += `📝 Name: ${extracted.name || 'N/A'}\n`;
         resultMessage += `🆔 Aadhaar: ${extracted.aadhaarNumber || 'N/A'}\n`;
@@ -212,7 +101,6 @@ export default function Chatbot() {
         resultMessage += `📮 Pincode: ${extracted.pincode || 'N/A'}\n\n`;
         resultMessage += `🎯 Confidence: ${extracted.confidence} ✨ +4 BTS points added!`;
 
-        // Update user context with Aadhaar data
         updateUser({
           aadhaarUploaded: true,
           aadhaarName: extracted.name,
@@ -222,17 +110,15 @@ export default function Chatbot() {
           aadhaarAddress: extracted.address,
           aadhaarPincode: extracted.pincode,
           aadhaarConfidence: extracted.confidence,
-          btsScore: (stabilityScore || 65) + 4
+          stabilityScore: (stabilityScore || 65) + 4
         });
 
         setMessages(prev => [...prev, { role: 'assistant', content: resultMessage }]);
       } else {
-        // Invalid Aadhaar
-        setMessages(prev => [...prev, { role: 'assistant', content: `❌ ${extracted.error || 'This does not appear to be a valid Aadhaar card. Please upload a clear photo of your Aadhaar card.'}` }]);
+        setMessages(prev => [...prev, { role: 'assistant', content: `❌ ${extracted.error || 'Invalid Aadhaar card.'}` }]);
       }
     } catch (error) {
-      console.error("Aadhaar OCR Processing Error:", error);
-      setMessages(prev => [...prev, { role: 'assistant', content: `⚠️ OCR failed: ${error.message || 'Could not process the image'}` }]);
+      setMessages(prev => [...prev, { role: 'assistant', content: `⚠️ OCR failed or not available in demo mode.` }]);
     } finally {
       setIsProcessingAadhaar(false);
       setAadhaarFile(null);

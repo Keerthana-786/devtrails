@@ -1,13 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ChevronRight, ChevronLeft, Shield, MapPin, Briefcase, Zap, CheckCircle, Smartphone, Bike, ShoppingBag, Info } from 'lucide-react';
+import { ChevronRight, ChevronLeft, Shield, MapPin, Briefcase, Zap, CheckCircle, Smartphone, Bike, ShoppingBag, Info, FileText } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import config from '../config';
+import { realAuthAPI } from '../REAL_API';
+import TermsModal from '../components/TermsModal';
 
 const Onboarding = () => {
   const navigate = useNavigate();
   const { setWorker, setIsAuthenticated } = useApp();
   const [step, setStep] = useState(1);
+  const [isTermsOpen, setIsTermsOpen] = useState(false);
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [selectedTier, setSelectedTier] = useState('standard');
   const [formData, setFormData] = useState({
     name: 'Raju Kumar',
@@ -94,46 +98,52 @@ const Onboarding = () => {
 
   const handleNext = async () => {
     if (step < 5) {
-      // Basic Validation
       if (step === 1 && (!formData.name || !formData.upiId)) {
         alert("Please fill all fields to continue.");
         return;
       }
+      if (step === 5 && !acceptedTerms) {
+        alert("Please accept the Terms and Conditions to activate your coverage.");
+        setIsTermsOpen(true);
+        return;
+      }
       setStep(step + 1);
-    }
-    else {
+    } else {
+      if (!acceptedTerms) {
+        alert("Please accept the Terms and Conditions to activate your coverage.");
+        return;
+      }
       try {
+        const token = sessionStorage.getItem('paynest_token') || localStorage.getItem('paynest_token');
         const tierObj = tiers.find(t => t.id === selectedTier);
-        const res = await fetch(`${config.API_URL}/onboard`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            ...formData,
-            premium: calculatedPremium,
-            trustScore: riskScore,
-            tier: selectedTier,
-            coverage_per_day: tierObj.coverage
-          })
-        });
-        const data = await res.json();
         
-        sessionStorage.setItem('paynest_token', data.token || 'demo_token');
-        setWorker({
-          ...formData,
-          ...data.user,
-          walletBalance: 0,
-          trustScore: riskScore,
+        const onboardingData = {
+          name: formData.name,
+          partner: formData.platform,
+          zone: formData.city,
+          upiId: formData.upiId,
+          plan: selectedTier,
           weeklyPremium: calculatedPremium,
-          tier: selectedTier,
-          coverage_per_day: tierObj.coverage,
-          policyStatus: 'ACTIVE',
-          policyValidUntil: '18 Apr 2026'
-        });
-        setIsAuthenticated(true);
-        navigate('/');
+          trustScore: riskScore,
+          coverage_per_day: tierObj.coverage
+        };
+
+        const data = await realAuthAPI.onboard(onboardingData, token);
+        
+        if (data.success) {
+          setWorker({
+            ...formData,
+            ...data.user,
+            walletBalance: data.user.walletBalance || 0,
+            onboarded: true
+          });
+          setIsAuthenticated(true);
+          navigate('/');
+        } else {
+          alert(data.error || "Onboarding failed");
+        }
       } catch (err) {
         console.error("Onboarding failed", err);
-        // Fallback for demo
         setWorker({
           ...formData,
           walletBalance: 0,
@@ -149,6 +159,8 @@ const Onboarding = () => {
       }
     }
   };
+
+
 
   const handleBack = () => {
     if (step > 1) setStep(step - 1);
@@ -359,6 +371,19 @@ const Onboarding = () => {
                   </p>
                </div>
             </div>
+
+            <div style={{ maxWidth: '540px', margin: '0 auto', display: 'flex', alignItems: 'center', gap: '12px' }}>
+               <input 
+                 type="checkbox" 
+                 id="terms" 
+                 checked={acceptedTerms}
+                 onChange={(e) => setAcceptedTerms(e.target.checked)}
+                 style={{ width: '20px', height: '20px', accentColor: 'var(--primary)', cursor: 'pointer' }}
+               />
+               <label htmlFor="terms" style={{ fontSize: '14px', color: 'var(--text-secondary)' }}>
+                 I have read and agree to the <span onClick={() => setIsTermsOpen(true)} style={{ color: 'var(--primary)', cursor: 'pointer', fontWeight: 'bold', textDecoration: 'underline' }}>Terms and Conditions</span>
+               </label>
+            </div>
           </div>
         )}
 
@@ -387,6 +412,7 @@ const Onboarding = () => {
       <style>{`
         @keyframes zoomIn { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
       `}</style>
+      <TermsModal isOpen={isTermsOpen} onClose={() => setIsTermsOpen(false)} />
     </div>
   );
 };

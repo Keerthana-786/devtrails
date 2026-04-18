@@ -6,6 +6,7 @@ const ClaimsHistory = () => {
   const { claims = [] } = useApp();
   const [filter, setFilter] = useState('All');
   const [statusFilter, setStatusFilter] = useState('All');
+  const [selectedClaim, setSelectedClaim] = useState(null);
 
   useEffect(() => {
     document.title = 'PayNest — Claims History';
@@ -128,7 +129,12 @@ const ClaimsHistory = () => {
                     </span>
                   </td>
                   <td style={{ padding: '20px 24px' }}>
-                    <button style={{ background: 'none', border: 'none', color: 'var(--primary)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '13px', fontWeight: '600' }}>
+                    <button 
+                      onClick={() => setSelectedClaim(claim)}
+                      style={{ background: 'none', border: 'none', color: 'var(--primary)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '13px', fontWeight: '600', transition: 'opacity 0.2s' }}
+                      onMouseOver={(e) => e.currentTarget.style.opacity = '0.7'}
+                      onMouseOut={(e) => e.currentTarget.style.opacity = '1'}
+                    >
                       View <ExternalLink size={14} />
                     </button>
                   </td>
@@ -138,6 +144,85 @@ const ClaimsHistory = () => {
           </table>
         </div>
       </div>
+
+      {/* Claim Detail Modal */}
+      {selectedClaim && (
+        <div style={{
+          position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000
+        }} onClick={() => setSelectedClaim(null)}>
+          <div style={{
+            background: 'var(--dark-bg)', borderRadius: '16px', border: '1px solid var(--card-border)', maxWidth: '500px', width: '90%', padding: '32px', boxShadow: '0 20px 60px rgba(0,0,0,0.3)'
+          }} onClick={(e) => e.stopPropagation()}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+              <h2 style={{ fontSize: '20px', fontWeight: '800', margin: 0 }}>Claim Details</h2>
+              <button onClick={() => setSelectedClaim(null)} style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', fontSize: '24px', cursor: 'pointer', padding: 0 }}>×</button>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <div>
+                <p style={{ fontSize: '12px', color: 'var(--text-muted)', fontWeight: '700', marginBottom: '4px' }}>CLAIM ID</p>
+                <p style={{ fontSize: '16px', fontFamily: 'monospace', fontWeight: 'bold' }}>{selectedClaim.id}</p>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                <div>
+                  <p style={{ fontSize: '12px', color: 'var(--text-muted)', fontWeight: '700', marginBottom: '4px' }}>DATE</p>
+                  <p style={{ fontSize: '14px' }}>{selectedClaim.dateDay}</p>
+                </div>
+                <div>
+                  <p style={{ fontSize: '12px', color: 'var(--text-muted)', fontWeight: '700', marginBottom: '4px' }}>TIME</p>
+                  <p style={{ fontSize: '14px' }}>{selectedClaim.dateTime}</p>
+                </div>
+              </div>
+
+              <div>
+                <p style={{ fontSize: '12px', color: 'var(--text-muted)', fontWeight: '700', marginBottom: '4px' }}>TRIGGER</p>
+                <p style={{ fontSize: '14px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span style={{ fontSize: '18px' }}>{selectedClaim.triggerType === 'HEAVY_RAIN' ? '🌧️' : (selectedClaim.triggerType === 'EXTREME_HEAT' ? '☀️' : (selectedClaim.triggerType === 'SEVERE_AQI' ? '💨' : '🚫'))}</span>
+                  {selectedClaim.trigger}
+                </p>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                <div>
+                  <p style={{ fontSize: '12px', color: 'var(--text-muted)', fontWeight: '700', marginBottom: '4px' }}>AMOUNT</p>
+                  <p style={{ fontSize: '18px', fontWeight: '800', color: 'var(--success)' }}>₹{selectedClaim.amount}</p>
+                </div>
+                <div>
+                  <p style={{ fontSize: '12px', color: 'var(--text-muted)', fontWeight: '700', marginBottom: '4px' }}>STATUS</p>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <span style={{ display: 'inline-block', width: '8px', height: '8px', borderRadius: '50%', background: selectedClaim.status === 'SETTLED' ? 'var(--success)' : 'var(--danger)' }} />
+                    <span style={{ fontSize: '14px', fontWeight: '600' }}>{selectedClaim.status}</span>
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <p style={{ fontSize: '12px', color: 'var(--text-muted)', fontWeight: '700', marginBottom: '8px' }}>FRAUD SCORE</p>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <div style={{ flex: 1, height: '8px', background: 'rgba(255,255,255,0.1)', borderRadius: '4px', position: 'relative', overflow: 'hidden' }}>
+                    <div style={{ 
+                      position: 'absolute', left: 0, top: 0, height: '100%', borderRadius: '4px',
+                      width: `${selectedClaim.fraudScore}%`,
+                      background: selectedClaim.fraudScore > 70 ? 'var(--danger)' : (selectedClaim.fraudScore > 30 ? 'var(--warning)' : 'var(--success)')
+                    }} />
+                  </div>
+                  <span style={{ fontWeight: '700', minWidth: '40px' }}>{selectedClaim.fraudScore}/100</span>
+                </div>
+              </div>
+
+              <div style={{ paddingTop: '16px', borderTop: '1px solid var(--card-border)' }}>
+                <button 
+                  onClick={() => setSelectedClaim(null)}
+                  style={{ width: '100%', padding: '12px', background: 'var(--primary)', color: 'white', border: 'none', borderRadius: '8px', fontWeight: '700', cursor: 'pointer', fontSize: '14px' }}
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

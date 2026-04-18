@@ -818,25 +818,29 @@ app.get("/api/ml/accuracy", (req, res) => {
   } catch (error) {
     console.error("Accuracy endpoint error:", error);
     res.status(500).json({ error: "Failed to load accuracy metrics" });
-  }
-});
+// Serve static files from the React app
+const buildPath = path.join(__dirname, "dist");
+app.use(express.static(buildPath));
 
-// Serve static files from the React app (but not for API routes)
-app.use((req, res, next) => {
-  if (req.path.startsWith('/api/')) {
-    return next();
-  }
-  express.static(path.join(__dirname, "dist"))(req, res, next);
-});
-
-// The "catchall" handler: for any request that doesn't
-// match one above, send back React's index.html file.
-app.get(/.*/, (req, res) => {
+// Handle SPA routing: serve index.html for unknown routes
+app.get("*", (req, res) => {
   // Don't serve index.html for API routes
   if (req.path.startsWith('/api/')) {
     return res.status(404).json({ error: 'API endpoint not found' });
   }
-  res.sendFile(path.join(__dirname, "dist", "index.html"));
+
+  const indexPath = path.join(buildPath, "index.html");
+  if (fs.existsSync(indexPath)) {
+    res.sendFile(indexPath);
+  } else {
+    res.status(500).send(`
+      <div style="padding: 24px; font-family: sans-serif;">
+        <h1 style="color: #ef4444;">Deployment Error</h1>
+        <p>Build directory 'dist' or 'index.html' not found.</p>
+        <pre style="background: #f1f5f9; padding: 12px; border-radius: 8px;">Path: ${indexPath}</pre>
+      </div>
+    `);
+  }
 });
 
 app.listen(PORT, () => {

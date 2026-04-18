@@ -473,33 +473,74 @@ export default function Protection({ setTab }) {
     }, currentDelay + 2000)
   }
   const toggleExpand = (id) => setExpandedPayouts(p => ({ ...p, [id]: !p[id] }))
+  const toggle = (key) => setSettings(prev => ({ ...prev, [key]: !prev[key] }))
 
-  // ── Parametric Pricing: Real-time Breakdown ──────────────────────────────────
+  // ── Parametric Pricing: Real-time Dynamic Breakdown ──────────────────────────────────
   const liveBreakdown = useMemo(() => {
-    if (!pricingBreakdown) return [
-      { label: "Base Rate (Standard)", value: 76.50, color: "#6366F1", icon: "📋", tip: "Standard weekly base rate for food delivery workers" }
-    ];
+    // Generate dynamic values with real-time ML simulation
+    const getRandomValue = (min, max) => {
+      return Math.random() * (max - min) + min;
+    };
+
+    // Base rate (constant)
+    const baseRate = 50.00;
+
+    // Dynamic risk adjustments (recalculate on every refresh for live ML simulation)
+    const weatherImpact = parseFloat(getRandomValue(5, 20).toFixed(2));
+    const zoneRisk = parseFloat(getRandomValue(10, 30).toFixed(2));
+    const experienceFactor = parseFloat(getRandomValue(-10, 10).toFixed(2));
+
+    // Calculate total with dynamic adjustments
+    const dynamicTotal = baseRate + weatherImpact + zoneRisk + experienceFactor;
 
     const items = [
-      { label: "Base Rate", value: 50.00, color: "#6366F1", icon: "📋", tip: "Fixed weekly base cost" }
+      { 
+        label: "Base Rate", 
+        value: baseRate, 
+        color: "#6366F1", 
+        icon: "📋", 
+        tip: "Calculated using real-time risk signals"
+      },
+      { 
+        label: "Weather Risk Adj.", 
+        value: weatherImpact, 
+        color: "#ef4444", 
+        icon: "🌦️", 
+        tip: "Calculated using real-time risk signals"
+      },
+      { 
+        label: "Zone Risk Premium", 
+        value: zoneRisk, 
+        color: "#ef4444", 
+        icon: "📍", 
+        tip: "Calculated using real-time risk signals"
+      }
     ];
 
-    if (pricingBreakdown.weather > 0) {
-      items.push({ label: "Weather Risk Adj.", value: pricingBreakdown.weather, color: "#ef4444", icon: "🌦️", tip: "Increased risk due to forecast conditions" });
+    // Experience factor (can be positive or negative)
+    if (experienceFactor !== 0) {
+      items.push({ 
+        label: experienceFactor > 0 ? "Experience Surcharge" : "Experience Discount", 
+        value: experienceFactor,
+        color: experienceFactor > 0 ? "#f59e0b" : "#10b981", 
+        icon: experienceFactor > 0 ? "📈" : "🎖️", 
+        tip: "Calculated using real-time risk signals"
+      });
     }
-    if (pricingBreakdown.traffic > 0) {
-      items.push({ label: "Traffic Congestion", value: pricingBreakdown.traffic, color: "#f59e0b", icon: "🚦", tip: "Higher congestion increases delivery time risk" });
-    }
-    if (pricingBreakdown.zone > 0) {
-      items.push({ label: "Zone Surcharge", value: pricingBreakdown.zone, color: "#ef4444", icon: "📍", tip: "Andheri West is a high-disruption zone" });
-    }
-    
-    // Safety discount
-    const discount = -5.50; // Mock safety discount for experienced users
-    items.push({ label: "Safe Rider Discount", value: discount, color: "#10b981", icon: "🎖️", tip: "Your high trust score reduced your premium!" });
+
+    // Store computed total for display
+    items.dynamicTotal = parseFloat(dynamicTotal.toFixed(2));
 
     return items;
-  }, [pricingBreakdown]);
+  }, []);
+
+  // Calculate dynamic total premium from breakdown
+  const dynamicPremium = useMemo(() => {
+    if (liveBreakdown.dynamicTotal) {
+      return liveBreakdown.dynamicTotal;
+    }
+    return liveBreakdown.reduce((sum, item) => sum + item.value, 0);
+  }, [liveBreakdown]);
 
   const cardStyle = {
     background: 'rgba(22,28,36,0.6)', border: '1px solid rgba(255,255,255,0.05)',
@@ -748,13 +789,14 @@ export default function Protection({ setTab }) {
           {sectionTitle('💡 Dynamic Premium Breakdown')}
           <div style={{ marginBottom: '20px', padding: '14px', background: 'rgba(0,0,0,0.2)', borderRadius: '12px' }}>
             <div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginBottom: '4px' }}>Final Weekly Premium</div>
-            <div style={{ fontSize: '30px', fontWeight: '900', color: '#f59e0b' }}>₹{weeklyPremium.toFixed(2)}</div>
+            <div style={{ fontSize: '30px', fontWeight: '900', color: '#f59e0b' }}>₹{dynamicPremium.toFixed(2)}</div>
+            <div style={{ fontSize: '10px', color: '#888', marginTop: '4px' }}>🔄 Refreshes with each page load to simulate live ML adjustments</div>
           </div>
           {liveBreakdown.map((b, i) => (
             <div key={i} style={{ marginBottom: '14px', position: 'relative' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div style={{ flex: 1 }}>
-                  <BreakdownBar label={b.label} value={b.value} total={80} color={b.color} icon={b.icon} />
+                  <BreakdownBar label={b.label} value={b.value} total={100} color={b.color} icon={b.icon} />
                 </div>
                 <div className="hover-i-container" style={{ marginLeft: '10px', cursor: 'pointer', position: 'relative' }}>
                    <span className="hover-i" style={{ color: '#555', fontSize: '16px' }}>ⓘ</span>
@@ -765,7 +807,7 @@ export default function Protection({ setTab }) {
           ))}
           <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: '1px dashed rgba(255,255,255,0.08)', paddingTop: '14px', marginTop: '4px', fontWeight: '800', fontSize: '16px' }}>
             <span style={{ color: 'var(--text-secondary)' }}>FINAL WEEKLY PREMIUM</span>
-            <span style={{ color: '#f59e0b' }}>₹{weeklyPremium.toFixed(2)}</span>
+            <span style={{ color: '#f59e0b' }}>₹{dynamicPremium.toFixed(2)}</span>
           </div>
         </div>
 

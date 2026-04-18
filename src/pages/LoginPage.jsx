@@ -3,11 +3,13 @@ import { useNavigate } from 'react-router-dom';
 import { Shield, PlayCircle, Phone, ArrowRight, Zap, Lock, Activity } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import config from '../config';
+import { realAuthAPI } from '../REAL_API';
 
 const LoginPage = () => {
   const navigate = useNavigate();
   const { setIsDemo, setIsAuthenticated, setWorker } = useApp();
   const [phoneNumber, setPhoneNumber] = useState('');
+  const [otp, setOtp] = useState('');
   const [showOtp, setShowOtp] = useState(false);
   const [loading, setLoading] = useState(false);
 
@@ -15,29 +17,43 @@ const LoginPage = () => {
     e.preventDefault();
     if (!showOtp) {
       if (phoneNumber.length < 10) return;
-      setShowOtp(true);
+      setLoading(true);
+      try {
+        const data = await realAuthAPI.sendOTP(phoneNumber);
+        if (data.success) {
+          setShowOtp(true);
+        }
+      } catch (err) {
+        console.error("OTP Error:", err);
+        // Fallback for development if backend is not reachable
+        setShowOtp(true);
+      }
+      setLoading(false);
     } else {
       setLoading(true);
       try {
-        const res = await fetch(`${config.API_URL}/login`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ phone: phoneNumber, otp: '1234' })
-        });
-        const data = await res.json();
-        if (data.token) {
+        // Backend expects 123456
+        const data = await realAuthAPI.verifyOTP(phoneNumber, otp);
+        if (data.success && data.token) {
           sessionStorage.setItem('paynest_token', data.token);
           setWorker(data.user);
           setIsAuthenticated(true);
-          navigate('/');
+          setIsDemo(false);
+          
+          if (data.isNew) {
+            navigate('/onboarding');
+          } else {
+            navigate('/');
+          }
         } else {
-          // If not found, go to onboarding
-          navigate('/onboarding');
+          alert(data.error || "Invalid Verification Code");
         }
       } catch (err) {
+        console.error("Login Error:", err);
         // Fallback for demo
         sessionStorage.setItem('paynest_token', 'demo_token');
         setIsAuthenticated(true);
+        setIsDemo(true);
         navigate('/');
       }
       setLoading(false);
@@ -148,18 +164,20 @@ const LoginPage = () => {
 
             {showOtp && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', animation: 'fadeIn 0.5s cubic-bezier(0.16, 1, 0.3, 1)' }}>
-                <label style={{ fontSize: '13px', fontWeight: '600', color: 'var(--text-secondary)' }}>Enter 4-digit OTP</label>
+                <label style={{ fontSize: '13px', fontWeight: '600', color: 'var(--text-secondary)' }}>Enter 6-digit OTP</label>
                 <input 
                   type="password" 
-                  placeholder="• • • •" 
-                  maxLength={4}
+                  placeholder="• • • • • •" 
+                  maxLength={6}
+                  value={otp}
+                  onChange={(e) => setOtp(e.target.value.replace(/[^0-9]/g, ''))}
                   style={{ 
                     width: '100%', padding: '18px', 
                     background: 'var(--card-bg)', border: '1px solid var(--primary)', 
                     borderRadius: '16px', color: 'white', fontSize: '28px', letterSpacing: '16px', textAlign: 'center', outline: 'none'
                   }} 
                 />
-                <p style={{ fontSize: '12px', color: 'var(--text-muted)', textAlign: 'center', marginTop: '8px' }}>Demo OTP: 1234</p>
+                <p style={{ fontSize: '12px', color: 'var(--text-muted)', textAlign: 'center', marginTop: '8px' }}>Demo OTP: 123456</p>
               </div>
             )}
 
