@@ -3,9 +3,9 @@
 FROM node:20-slim AS frontend-builder
 WORKDIR /app
 COPY package*.json ./
-RUN npm ci --include=dev
+RUN npm ci
 COPY . .
-RUN npm run build
+RUN echo "Starting Vite build..." && npm run build && echo "Build complete!" && ls -la dist/
 
 # Stage 2: Final image with Node.js and Python
 FROM node:20-slim
@@ -29,15 +29,16 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy Node.js dependencies and install
 COPY package*.json ./
-RUN npm ci --include=dev
+RUN npm ci --only=production
 
-# Copy built frontend from Stage 1
-COPY --from=frontend-builder /app/dist ./dist
-
-# Copy backend source files
+# Copy backend source files FIRST
 COPY server.js chatbot.js api.py ./
-COPY models/ ./models/
-COPY datasets/ ./datasets/
+COPY models/ ./models/ || true
+COPY datasets/ ./datasets/ || true
+
+# Copy built frontend from Stage 1 (verify it exists)
+COPY --from=frontend-builder /app/dist ./dist
+RUN if [ -f dist/index.html ]; then echo "✓ Build verified"; ls -la dist/; else echo "✗ Build failed - dist missing"; exit 1; fi
 
 # Create non-root user for security
 RUN groupadd -g 1001 nodejs && \
